@@ -1,0 +1,93 @@
+@()(implicit lang: Lang)
+
+@base("SQLTool") {
+<link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/jqgrid/css/ui.jqgrid.css")' />
+<style>
+#headeer {
+	position: absolute;
+	top: 40px;
+	left: 0px;
+	height: 40px;
+}
+#workspace {
+	position: absolute;
+	top: 40px;
+	left: 0px;
+	width: 100%;
+}
+#upper-pane {
+	height: 60%;
+	width: 100%;
+}
+#lower-pane {
+	height: 40%;
+	width: 100%;
+}
+#tree-pane {
+	height: 100%;
+	width: 30%;
+}
+#sql-pane {
+	height: 100%;
+	width: 70%;
+}
+#toolbar {
+	position: absolute;
+	left: 0px;
+	width: 100%;
+	height: 40px;
+}
+#text-pane {
+	position: absolute;
+	left: 0px;
+	top: 40px;
+	width: 100%;
+}
+#txtSQL {
+	width: 90%;
+}
+#grid-pane {
+	width: 90%;
+}
+
+</style>
+<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-ja.js")'></script>
+<script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.src.js")'></script>
+<script src="@routes.Assets.at("javascripts/sqlgrid.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/sqltool.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/jquery.splitter.js")" type="text/javascript"></script>
+<script>
+var app;
+$(document).ready(function() {
+	$.fn.button.noConflict();
+	app = new flect.app.sqltool.SqlTool();
+});
+</script>
+<div id="header" class="navbar navbar-inverse">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<span class="brand" class="active">SQLTool</span>
+			<ul class="nav">
+				<li><a href="@routes.Assets.at("ja/manual.html")">使い方</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div id="workspace">
+	<div id="upper-pane">
+		<div id="tree-pane">Tree</div>
+		<div id="sql-pane">
+			<div id="toolbar">Toolbar
+				<button id="btnExec">Execute</button>
+			</div>
+			<div id="text-pane">
+				<textarea id="txtSQL" cols="100" rows="10"></textarea>
+			</div>
+		</div>
+	</div>
+	<div id="lower-pane">
+		<div id="grid-pane">Grid</div>
+		<div id="error-msg">Error</div>
+	</div>
+</div>
+}
