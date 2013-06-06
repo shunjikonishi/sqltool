@@ -448,7 +448,8 @@ flect.html.FixedDiv.prototype.release = function() {
 			current = null,
 			drag = false,
 			bgColor = null,
-			current = null;
+			current = null,
+			dragObj = null;
 		
 		function doResize(current, ev) {
 			var parent = current.parent;
@@ -508,53 +509,54 @@ flect.html.FixedDiv.prototype.release = function() {
 				}
 				current.position(t);
 			}
-			if (current._windowResized) {
-				curent._windowResized(ev);
+			if (current.windowResized()) {
+				curent.windowResized()(ev);
 			}
 		}
 		
 		$(document.documentElement).mousedown(function() {
-			if (current != null) {
-				bgColor = current.resizebar.css("background-color");
-				current.resizebar.css("background-color", '#696969');
-				$('<div class="splitterMask"></div>').insertAfter(current.parent);
-				$('body').css('cursor', current.resizebar.css("cursor"));
+			dragObj = current;
+			if (dragObj != null) {
+				bgColor = dragObj.resizebar.css("background-color");
+				dragObj.resizebar.css("background-color", '#696969');
+				$('<div class="splitterMask"></div>').insertAfter(dragObj.parent);
+				$('body').css('cursor', dragObj.resizebar.css("cursor"));
 				drag = true;
 				return false;
 			}
 		}).mouseup(function() {
-			if (current != null) {
+			if (dragObj != null) {
 				drag = false;
 				$('div.splitterMask').remove();
-				current.resizebar.css("background-color", bgColor);
+				dragObj.resizebar.css("background-color", bgColor);
 				$('body').css('cursor', 'auto');
 			}
 		}).mousemove(function(ev) {
-			if (current == null || !drag) {
+			if (dragObj == null || !drag) {
 				return;
 			}
-			var horizontal = current.orientation() == "horizontal";
+			var horizontal = dragObj.orientation() == "horizontal";
 			if (horizontal) {
-				var pw = current.parent.width();
-				var x = ev.clientX - current.parent.offset().left;
+				var pw = dragObj.parent.width();
+				var x = ev.clientX - dragObj.parent.offset().left;
 				if (x < 0) {
 					x = 0;
 				} else if (x > pw) {
 					x = pw;
 				}
-				current.position(x);
+				dragObj.position(x);
 			} else {
-				var ph = current.parent.height();
-				var y = ev.clientY - current.parent.offset().top;
+				var ph = dragObj.parent.height();
+				var y = ev.clientY - dragObj.parent.offset().top;
 				if (y < 0) {
 					y = 0;
 				} else if (y > ph) {
 					y = ph;
 				}
-				current.position(y);
+				dragObj.position(y);
 			}
-			if (current._paneResized) {
-				current._paneResized(ev);
+			if (dragObj.paneResized()) {
+				dragObj.paneResized()(ev);
 			}
 			for (var i=0; i<splitters.length; i++) {
 				var pane = splitters[i];

@@ -17,6 +17,8 @@ import jp.co.flect.javascript.jqgrid.RdbColModelFactory;
 import jp.co.flect.javascript.jqgrid.RdbQueryModel;
 
 import java.text.SimpleDateFormat;
+import java.sql.Connection;
+
 /**
  * Return results of select statement with jqGrid JSON format.
  */
@@ -39,7 +41,7 @@ class SelectTool(DATABASE_NAME: String) extends Controller {
 			val gridParam = JqGrid.JqGridForm.bindFromRequest.get;
 			val sqlParams = getSQLParams(request);
 			
-			DB.withConnection(DATABASE_NAME) { con =>
+			withConnection { con =>
 				val queryModel = new RdbQueryModel(con, sql, model);
 				queryModel.setUseOffset(true);
 				if (gridParam.sortColumn.length > 0) {
@@ -80,13 +82,24 @@ class SelectTool(DATABASE_NAME: String) extends Controller {
 		Params(request).get("sql") match {
 			case Some(sql) =>
 				val model = Cache.getOrElse[ColModel](sql, CACHE_DURATION) {
-					DB.withConnection(DATABASE_NAME) { con =>
+					withConnection { con =>
 						val factory = new RdbColModelFactory(con);
 						factory.getQueryModel(sql);
 					}
 				}
 				(sql, model);
 			case None => throw new SQLException("SQL not specified");
+		}
+	}
+	
+	protected def withConnection[A](block: Connection => A): A = DB.withConnection(DATABASE_NAME)(block);
+	protected def withTransaction[A](block: Connection => A): A = DB.withTransaction(DATABASE_NAME)(block);
+	
+	protected def using[A <: AutoCloseable, B](resource: A)(block: A => B): B = {
+		try {
+			block(resource);
+		} finally {
+			resource.close;
 		}
 	}
 }

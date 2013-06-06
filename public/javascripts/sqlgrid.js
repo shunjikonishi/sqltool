@@ -12,7 +12,7 @@ setting {
 	"gridId" : "id of grid"
 }
 */
-flect.util.SQLGrid = function(setting) {
+flect.util.SqlGrid = function(setting) {
 	setting = $.extend({
 		"height" : "200px",
 		"gridCaption" : "Results",
