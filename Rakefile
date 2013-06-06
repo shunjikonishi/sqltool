@@ -1,5 +1,5 @@
 task :default => "test"
 
 task "test" do
-	puts "test"
+	sh "java -classpath target/scala-2.10/classes utils.Setup"
 end
