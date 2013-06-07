@@ -7,23 +7,48 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		$("#grid-pane").hide();
 		$("#error-msg").html(str).show();
 	};
-	function SqlTree(el) {
+	function MessagePane(el) {
+		el = $(el);
+		function message(text) {
+			grid.hide();
+			el.html(text).show();
+		}
+		$.extend(this, {
+			"message" : message
+		});
+	}
+   	function SqlTree(el) {
+		function lazyRead(url, node) {
+			$.ajax({
+				"url" : url,
+				"type" : "POST",
+				"success" : function(data, textStatus){
+					var children = [];
+					for (var i=0; i<data.length; i++) {
+						var obj = {
+							"title" : data[i].name
+						};
+						children.push(obj);
+					}
+					node.addChild(children);
+					node.setLazyNodeStatus(DTNodeStatus_Ok);
+				}
+			});
+		}
 		var tree = $(el).dynatree({
 			"onLazyRead" : function(node) {
 				var title = node.data.title;
 				if (title == "Tables") {
-					node.appendAjax({
-						"url": "/sql/tables",
-						"type" : "POST"
-					});
+					lazyRead("/sql/tables", node);
 				} else if (title == "Views") {
-					node.appendAjax({
-						"url": "/sql/views",
-						"type" : "POST"
-					});
+					lazyRead("/sql/views", node);
 				}
 			},
 			"children" : [
+				{
+					"title" : "Queries",
+					"isFolder" : true
+				},
 				{
 					"title" : "Schemas",
 					"isFolder" : true,
@@ -39,26 +64,26 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							"isLazy" : true
 						}
 					]
-				},
-				{
-					"title" : "Queries",
-					"isFolder" : true
 				}
 			]
 		});
 	};
+	var grid, tree, msgPane;
 	flect.app.sqltool.SqlTool = function(setting) {
-		var grid = new flect.util.SqlGrid({
-				"modelPath" : "/sql/model",
-				"dataPath" : "/sql/data",
-				"div" : "#grid-pane",
-				"error" : error
-			}),
-			tree = new SqlTree("#tree-pane");
+		msgPane = new MessagePane("#error-msg");
+		grid = new flect.util.SqlGrid({
+			"modelPath" : "/sql/model",
+			"dataPath" : "/sql/data",
+			"div" : "#grid-pane",
+			"error" : msgPane.message
+		});
+		tree = new SqlTree("#tree-pane");
+		
+		$("#sql-tab").tabs();
 		$("#btnExec").click(function() {
 			var sql = $("#txtSQL").val();
-			$("#grid-pane").show();
-			grid.execute(sql);
+			var h = $("#lower-pane").height() - 120;
+			grid.show().height(h).execute(sql);
 		});
 		$("#workspace").css("height", document.documentElement.clientHeight - 40);
 		$("#workspace").splitter({

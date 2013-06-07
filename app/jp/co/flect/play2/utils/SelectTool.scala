@@ -22,7 +22,7 @@ import java.sql.Connection;
 /**
  * Return results of select statement with jqGrid JSON format.
  */
-class SelectTool(DATABASE_NAME: String) extends Controller {
+class SelectTool(val databaseName: String) extends Controller with DatabaseUtility {
 	
 	private val CACHE_DURATION = 60 * 60;
 	
@@ -92,15 +92,5 @@ class SelectTool(DATABASE_NAME: String) extends Controller {
 		}
 	}
 	
-	protected def withConnection[A](block: Connection => A): A = DB.withConnection(DATABASE_NAME)(block);
-	protected def withTransaction[A](block: Connection => A): A = DB.withTransaction(DATABASE_NAME)(block);
-	
-	protected def using[A <: AutoCloseable, B](resource: A)(block: A => B): B = {
-		try {
-			block(resource);
-		} finally {
-			resource.close;
-		}
-	}
 }
 

@@ -3,55 +3,6 @@
 @base("SQLTool") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/jqgrid/css/ui.jqgrid.css")' />
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/dynatree/src/skin/ui.dynatree.css")' />
-<style>
-#headeer {
-	position: absolute;
-	top: 40px;
-	left: 0px;
-	height: 40px;
-}
-#workspace {
-	position: absolute;
-	top: 40px;
-	left: 0px;
-	width: 100%;
-}
-#upper-pane {
-	height: 60%;
-	width: 100%;
-}
-#lower-pane {
-	height: 40%;
-	width: 100%;
-}
-#tree-pane {
-	height: 100%;
-	width: 30%;
-}
-#sql-pane {
-	height: 100%;
-	width: 70%;
-}
-#toolbar {
-	position: absolute;
-	left: 0px;
-	width: 100%;
-	height: 40px;
-}
-#text-pane {
-	position: absolute;
-	left: 0px;
-	top: 40px;
-	width: 100%;
-}
-#txtSQL {
-	width: 90%;
-}
-#grid-pane {
-	width: 90%;
-}
-
-</style>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/i18n/grid.locale-ja.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/jqgrid/js/jquery.jqGrid.min.js")'></script>
 <script type='text/javascript' src='@routes.Assets.at("javascripts/ext/dynatree/dist/jquery.dynatree.min.js")'></script>
@@ -79,17 +30,26 @@ $(document).ready(function() {
 	<div id="upper-pane">
 		<div id="tree-pane">Tree</div>
 		<div id="sql-pane">
-			<div id="toolbar">Toolbar
-				<button id="btnExec">Execute</button>
+			<div id="toolbar">
+				<button class="btn btn-info" id="btnExec">Execute</button>
+				<button class="btn btn-info" id="btnSave">Save</button>
 			</div>
-			<div id="text-pane">
-				<textarea id="txtSQL" cols="100" rows="10"></textarea>
+			<div id="sql-tab">
+				<ul>
+					<li><a href="#text-pane">SQL</a></li>
+					<li><a href="#form-pane">Form</a></li>
+				</ul>
+				<div id="text-pane">
+					<textarea id="txtSQL">select * from contents</textarea>
+				</div>
+				<div id="form-pane">Form</div>
 			</div>
+			<div id="schema-tab" style="display:none"></div>
 		</div>
 	</div>
 	<div id="lower-pane">
-		<div id="grid-pane">Grid</div>
-		<div id="error-msg">Error</div>
+		<div id="grid-pane" class="lower-child" style="display:none"></div>
+		<div id="error-msg" class="lower-child alert alert-error" style="display:none"></div>
 	</div>
 </div>
 }

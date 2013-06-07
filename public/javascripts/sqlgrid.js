@@ -28,6 +28,22 @@ flect.util.SqlGrid = function(setting) {
 	function defaultError(str) {
 		alert(str);
 	}
+	function hide() {
+		div.hide();
+		return this;
+	}
+	function show() {
+		div.show();
+		return this;
+	}
+	function height(v) {
+		if (v) {
+			setting.height = v;
+			return this;
+		} else {
+			return setting.height;
+		}
+	}
 	function execute(sql, params) {
 		var data = {
 			"sql" : sql
@@ -45,6 +61,7 @@ flect.util.SqlGrid = function(setting) {
 				setting.error(xhr.responseText);
 			}
 		});
+		return this;
 	}
 	function makeGrid(sql, colModel, params) {
 		if (grid) {
@@ -63,6 +80,7 @@ flect.util.SqlGrid = function(setting) {
 		}
 		
 		var t;
+console.log("height: " + setting.height);
 		grid.jqGrid({
 			"url" : setting.dataPath,
 			"datatype" : "json",
@@ -97,6 +115,9 @@ flect.util.SqlGrid = function(setting) {
 		});
 	}
 	$.extend(this, {
-		"execute" : execute
+		"execute" : execute,
+		"height" : height,
+		"show" : show,
+		"hide" : hide
 	});
 }
