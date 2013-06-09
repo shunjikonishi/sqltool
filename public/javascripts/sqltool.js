@@ -3,6 +3,21 @@ if (typeof(flect.app) == "undefined") flect.app = {};
 if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 
 (function($) {
+	function normalizeGroup(g) {
+		if (!g) {
+			return "";
+		}
+		while (g.indexOf("//") != -1) {
+			g = g.replace(/\/\//, "/");
+		}
+		if (g.length > 0 && g.charAt(0) == "/") {
+			g = g.substring(1);
+		}
+		if (g.length > 0 && g.charAt(g.length-1) == "/") {
+			g = g.substring(0, g.length - 1);
+		}
+		return g;
+	}
 	function MessagePane(app, el) {
 		el = $(el);
 		function message(text) {
@@ -26,12 +41,36 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			var parent = node.getParent().getParent();
 			return parent.data.title == SCHEMAS;
 		}
+		function doSchemaNodeAction(node) {
+			var title = node.data.title;
+			app.executeSql("SELECT * FROM " + title);
+		}
+		function isQueryNode(node) {
+			return node.data.kind == "query";
+		}
+		function doQueryNodeAction(node) {
+			$.ajax({
+				"url" : "/sql/queryInfo",
+				"type" : "POST",
+				"data" : {
+					"id" : node.data.id
+				},
+				"success" : function(data, textStatus){
+					app.setQueryInfo(data);
+				},
+				"error" : function(xhr, status, e) {
+					error(xhr.responseText);
+				}
+			});
+		}
 		function activate(node) {
 			var parent = node.getParent();
 			var title = node.data.title;
-			console.log("Node = " + title + ", " + node.group + ", " + node.data.group);
+			console.log("Node = title=" + title + ", group=" + node.data.group + ", kind=" + node.data.kind + ", id=" + node.data.id);
 			if (isSchemaNode(node)) {
-				app.executeSql("SELECT * FROM " + title);
+				doSchemaNodeAction(node);
+			} else if (isQueryNode(node)) {
+				doQueryNodeAction(node);
 			}
 		}
 		function readSchema(url, node) {
@@ -56,7 +95,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function readQueries(group, node) {
 			if (!group) {
-				group = "/";
+				group = "";
 			}
 			$.ajax({
 				"url" : "/sql/queryNode",
@@ -69,11 +108,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					for (var i=0; i<data.length; i++) {
 						var obj = {
 							"title" : data[i].name,
-							"group" : data[i].group
+							"group" : data[i].group,
+							"kind" : data[i].kind
 						};
 						if (data[i].kind == "group") {
 							obj.isLazy = true;
 							obj.isFolder = true;
+						} else {
+							obj.id = data[i].id;
 						}
 						children.push(obj);
 					}
@@ -158,11 +200,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				alert("Name is required");
 				return;
 			}
-			if (!group) {
-				group = "/";
-			} else if (!group.startsWith("/")) {
-				group = "/" + group;
-			}
+console.log("doSave: " + group + ", " + normalizeGroup(group));
+			group = normalizeGroup(group);
 			$.ajax({
 				"url" : "/sql/save",
 				"type" : "POST",
@@ -227,8 +266,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			var h = $("#lower-pane").height() - 120;
 			sqlGrid.show().height(h).execute(sql);
 		}
+		function setQueryInfo(query) {
+			currentId = query.id;
+			$("#txtSQL").val(query.sql);
+			executeSql(query.sql);
+		}
 		$.extend(this, {
-			"executeSql" : executeSql
+			"executeSql" : executeSql,
+			"setQueryInfo" : setQueryInfo
 		});
 	}
 })(jQuery);

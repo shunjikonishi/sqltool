@@ -33,7 +33,7 @@ object QueryTool extends Controller with DatabaseUtility {
 		"desc" -> optional(text)
 	)(QueryInfo.apply)(QueryInfo.unapply));
 	
-	def databaseName = "target";
+	def databaseName = "default";
 	
 	def prepareSql = Action { implicit request =>
 		Ok("OK");
@@ -54,10 +54,11 @@ object QueryTool extends Controller with DatabaseUtility {
 	def queryNode = Action { implicit request =>
 		val group = Params(request).get("group").getOrElse("");
 println("Group = [" + group + "]");
-		val gList = man.getGroupList(group).map(g => (g.substring(1), "group", g));
-		val qList = man.getQueryList(group).map( q => (q.name, "query", group));
-		val ret = (gList ::: qList ::: Nil).map { case (n, k, g) =>
+		val gList = man.getGroupList(group).map(g => ("", g, "group", if (group == "") g else group + "/" + g));
+		val qList = man.getQueryList(group).map( q => (q.id, q.name, "query", group));
+		val ret = (gList ::: qList ::: Nil).map { case (i, n, k, g) =>
 			JsObject(List(
+				"id" -> JsString(i),
 				"name" -> JsString(n),
 				"kind" -> JsString(k),
 				"group" -> JsString(g) 
@@ -65,5 +66,14 @@ println("Group = [" + group + "]");
 		}
 println("Ret = " + ret);
 		Ok(JsArray(ret).toString).as("application/json");
+	}
+	
+	def queryInfo = Action { implicit request =>
+		val id = Params(request).get("id").getOrElse("0");
+		val ret = man.getQueryInfo(id);
+		ret match {
+			case Some(info) => Ok(info.toJson.toString).as("application/json");
+			case None => NotFound("Not found");
+		}
 	}
 }

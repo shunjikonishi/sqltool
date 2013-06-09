@@ -1,9 +1,22 @@
 package models;
 
+import play.api.libs.json.JsObject;
+import play.api.libs.json.JsString;
+
 case class QueryInfo(optId: Option[String] = None, name: String, group: String, sql: String, description: Option[String]) {
 	
 	def id = optId.getOrElse("");
 	def hasId = !optId.isEmpty;
+	
+	def toJson = {
+		JsObject(List(
+			"id" -> JsString(id),
+			"name" -> JsString(name),
+			"group" -> JsString(group),
+			"sql" -> JsString(sql),
+			"description" -> JsString(description.getOrElse(""))
+		));
+	}
 }
 
 trait QueryManager {
@@ -12,7 +25,7 @@ trait QueryManager {
 	def getQueryList(parent: String): List[QueryInfo];
 	
 	def save(info:QueryInfo): QueryInfo;
-	def getQueryInfo(id: Int): Option[QueryInfo];
+	def getQueryInfo(id: String): Option[QueryInfo];
 }
 
 import anorm._;
@@ -89,22 +102,26 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 	}
 	
 	def getGroupList(parent: String): List[String] = withConnection { implicit con =>
-		SQL("""
-				SELECT groupname FROM sqltool_sql
-				 WHERE groupname LIKE {gl}
-				   AND groupname <> {gn}
-			"""
-			).on(
-				"gl" -> (parent + "%"),
-				"gn" -> parent
-			).apply.map{ row =>
-				val name = row[String]("groupname");
-				if (parent != "/") {
-					name.substring(parent.length);
-				} else {
-					name;
-				}
-			}.filterNot(_.substring(1).contains("/")).toList;
+		if (parent == "") {
+			SQL("""
+					SELECT distinct groupname FROM sqltool_sql
+				"""
+				).apply.map{ row =>
+					val g = row[String]("groupname");
+					g.split("/")(0);
+				}.toSet.toList;
+		} else {
+			SQL("""
+					SELECT distinct groupname FROM sqltool_sql
+					 WHERE groupname LIKE {gl}
+				"""
+				).on(
+					"gl" -> (parent + "/%")
+				).apply.map{ row =>
+					val g = row[String]("groupname").substring(parent.length + 1);
+					g.split("/")(0);
+				}.toSet.toList;
+		}
 	}
 	
 	def getQueryList(parent: String): List[QueryInfo] = withConnection { implicit con =>
@@ -113,9 +130,9 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			).apply().map(rowToInfo(_)).toList;
 	}
 	
-	def getQueryInfo(id: Int): Option[QueryInfo] = withConnection { implicit con =>
+	def getQueryInfo(id: String): Option[QueryInfo] = withConnection { implicit con =>
 		SQL(SELECT_STATEMENT + "WHERE id = {id}").on(
-				"id" -> id
+				"id" -> Integer.parseInt(id)
 			).apply().map(rowToInfo(_)).headOption;
 	}
 }
