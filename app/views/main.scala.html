@@ -21,7 +21,7 @@ $(document).ready(function() {
 		<div class="container-fluid">
 			<span class="brand" class="active">SQLTool</span>
 			<ul class="nav">
-				<li><a href="@routes.Assets.at("ja/manual.html")">使い方</a></li>
+				<li><a href="@routes.Assets.at("ja/manual.html")">How to use</a></li>
 			</ul>
 		</div>
 	</div>
@@ -51,5 +51,15 @@ $(document).ready(function() {
 		<div id="grid-pane" class="lower-child" style="display:none"></div>
 		<div id="error-msg" class="lower-child alert alert-error" style="display:none"></div>
 	</div>
+</div>
+<div id="saveDialog" style="display:none">
+	<fieldset>
+		<legend>Save SQL</legend>
+		<ul>
+			<li><label>Name</label><input type="text" id="sql-name"></li>
+			<li><label>Group</label><input type="text" id="sql-group"></li>
+			<li><label>Group</label><textarea id="sql-desc"></textarea>
+		</ul>
+	</fieldset>
 </div>
 }

@@ -9,6 +9,8 @@ POST    /sql/model                  controllers.SelectTool.colModel
 POST    /sql/data                   controllers.SelectTool.data
 POST    /sql/tables                 controllers.SchemaTool.tables
 POST    /sql/views                  controllers.SchemaTool.views
+POST    /sql/save                   controllers.QueryTool.save
+POST    /sql/queryNode              controllers.QueryTool.queryNode
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

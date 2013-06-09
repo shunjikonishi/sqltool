@@ -10,6 +10,7 @@ object ApplicationBuild extends Build {
   val appDependencies = Seq(
     // Add your project dependencies here,
     jdbc,
+    anorm,
     "com.google.code.gson" % "gson" % "2.2.2",
     "postgresql" % "postgresql" % "9.1-901.jdbc4"
   )

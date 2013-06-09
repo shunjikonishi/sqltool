@@ -23,7 +23,7 @@ object SessionIdFilter extends Filter {
 		
 		val id = rh.session.get(SESSIONID_NAME).getOrElse(generateSessionId);
 		val request = rh.copy(tags=rh.tags + (SESSIONID_NAME -> id));
-		Logger.debug("SessionIdFilter: uri=" + request.uri + ", id=" + id);
+		Logger.debug("SessionIdFilter: uri=" + request.uri + ", id=" + id + ", " + rh.session.get(SESSIONID_NAME));
 		
 		def addSessionId(result: PlainResult): Result = {
 			val session = Session.decodeFromCookie(
