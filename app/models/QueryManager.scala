@@ -62,7 +62,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					   SET name = {name},
 					       groupname = {groupname},
 					       sqltext = {sqltext},
-					       description = {description}
+					       description = {description},
 					       update_date = {update_date}
 					 WHERE id = {id}
 				"""
