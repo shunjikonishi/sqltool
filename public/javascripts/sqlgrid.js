@@ -80,7 +80,6 @@ flect.util.SqlGrid = function(setting) {
 		}
 		
 		var t;
-console.log("height: " + setting.height);
 		grid.jqGrid({
 			"url" : setting.dataPath,
 			"datatype" : "json",

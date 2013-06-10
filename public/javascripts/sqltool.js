@@ -3,6 +3,11 @@ if (typeof(flect.app) == "undefined") flect.app = {};
 if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 
 (function($) {
+	$.ajaxSetup({
+		"error" : function(xhr, status, e) {
+			error(xhr.responseText);
+		}
+	});
 	function normalizeGroup(g) {
 		if (!g) {
 			return "";
@@ -32,7 +37,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		var SCHEMAS = "Schemas",
 			TABLES = "Tables",
 			VIEWS = "Views",
-			QUERIES = "Queries";
+			QUERIES = "Queries",
+			expandTarget = null;
 		
 		function isSchemaNode(node) {
 			if (node.getLevel() != 3) {
@@ -48,9 +54,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"type" : "POST",
 				"success" : function(data, textStatus){
 					app.setTableInfo(title, data);
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
 				}
 			});
 		}
@@ -62,20 +65,17 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"url" : "/sql/queryInfo",
 				"type" : "POST",
 				"data" : {
-					"id" : node.data.id
+					"id" : node.data.key
 				},
 				"success" : function(data, textStatus){
 					app.setQueryInfo(data);
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
 				}
 			});
 		}
 		function activate(node) {
 			var parent = node.getParent();
 			var title = node.data.title;
-			console.log("Node = title=" + title + ", group=" + node.data.group + ", kind=" + node.data.kind + ", id=" + node.data.id);
+			console.log("Node = title=" + title + ", group=" + node.data.group + ", kind=" + node.data.kind + ", id=" + node.data.key);
 			if (isSchemaNode(node)) {
 				doSchemaNodeAction(node);
 			} else if (isQueryNode(node)) {
@@ -96,9 +96,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					}
 					node.addChild(children);
 					node.setLazyNodeStatus(DTNodeStatus_Ok);
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
 				}
 			});
 		}
@@ -124,17 +121,95 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							obj.isLazy = true;
 							obj.isFolder = true;
 						} else {
-							obj.id = data[i].id;
+							obj.key = data[i].id;
 						}
 						children.push(obj);
 					}
 					node.addChild(children);
 					node.setLazyNodeStatus(DTNodeStatus_Ok);
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
+					if (expandTarget) {
+						addNode(expandTarget);
+					}
 				}
 			});
+		}
+		function getChildNode(node, kind, title) {
+			var children = node.getChildren();
+			if (!children) {
+				return null;
+			}
+			for (var i=0; i<children.length; i++) {
+				var child = children[i];
+				if (child.data.kind == kind && child.data.title == title) {
+					return child;
+				}
+			}
+			return null;
+		}
+		function getFirstQueryNode(node) {
+			var children = node.getChildren();
+			if (!children) {
+				return null;
+			}
+			for (var i=0; i<children.length; i++) {
+				var child = children[i];
+				if (child.data.kind == "query") {
+					return child;
+				}
+			}
+			return null;
+		}
+		function isLoaded(node) {
+			return node.getChildren() !== undefined;
+		}
+		function addNode(queryInfo) {
+			var parent = tree.getNodeByKey(QUERIES);
+			if (!isLoaded(parent)) {
+				expandTarget = queryInfo;
+				parent.expand(true);
+				return;
+			}
+console.log("addNode: "  + parent + ", " + queryInfo.group);
+			if (queryInfo.group) {
+				var names = queryInfo.group.split("/");
+				for (var i=0; i<names.length; i++) {
+					parent.expand();
+					var child = getChildNode(parent, "group", names[i]);
+					if (child == null) {
+						child = parent.addChild({
+							"title" : names[i],
+							"group" : parent.data.group,
+							"kind" : "group",
+							"isFolder" : true
+						}, getFirstQueryNode(parent));
+					} else if (!isLoaded(child)) {
+						expandTarget = queryInfo;
+						child.expand(true);
+						return;
+					}
+					parent = child;
+				}
+			}
+			parent.expand(true);
+			var newNode = getChildNode(parent, "query", queryInfo.name);
+			if (newNode == null) {
+				newNode = parent.addChild({
+					"title" : queryInfo.name,
+					"group" : parent.data.group,
+					"key" : queryInfo.id,
+					"kind" : "query"
+				});
+			}
+			newNode.activate();
+			expandTarget = null;
+		}
+		function removeNode(queryInfo) {
+			var node = tree.getNodeByKey(queryInfo.id);
+			if (node) {
+				node.remove();
+				return true;
+			}
+			return false;
 		}
 		var tree = $(el).dynatree({
 			"onActivate" : activate,
@@ -151,38 +226,61 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"children" : [
 				{
 					"title" : QUERIES,
+					"key" : QUERIES,
 					"isFolder" : true,
 					"isLazy" : true
 				},
 				{
 					"title" : SCHEMAS,
+					"key" : SCHEMAS,
 					"isFolder" : true,
 					"children" : [
 						{
 							"title" : TABLES,
+							"key" : TABLES,
 							"isFolder" : true,
 							"isLazy" : true
 						},
 						{
 							"title" : VIEWS,
+							"key" : VIEWS,
 							"isFolder" : true,
 							"isLazy" : true
 						}
 					]
 				}
 			]
+		}).dynatree("getTree");
+		$.extend(this, {
+			"tree" : tree,
+			"addNode" : addNode,
+			"removeNode" : removeNode
 		});
 	};
 	function SaveDialog(app, el) {
 		var dialog = $(el);
-		function show(mode, id) {
+		function show(mode, queryInfo) {
+			var id = "", 
+				name = "", 
+				group = "", 
+				desc = "";
+			if (queryInfo) {
+				id = queryInfo.id;
+				name = queryInfo.name;
+				group = queryInfo.group;
+				desc = queryInfo.desc;
+			}
+			$("#sql-name").val(name);
+			$("#sql-group").val(group);
+			$("#sql-desc").val(desc);
+			
 			dialog.dialog({
 				"title" : "Save SQL",
 				"buttons" : [
 					{
 						"text" : "Save",
 						"click" : function() { 
-							doSave(id);
+							doSave(mode, id);
 						}
 					},
 					{
@@ -199,7 +297,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function close() {
 			dialog.dialog("close");
 		}
-		function doSave(id) {
+		function doSave(mode, id) {
 			var name = $("#sql-name").val(),
 				group = $("#sql-group").val(),
 				desc = $("#sql-desc").val();
@@ -209,37 +307,54 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				return;
 			}
 			group = normalizeGroup(group);
+			save(mode, {
+				"id" : id,
+				"name" : name,
+				"group" : group,
+				"desc" : desc,
+				"sql" : sql
+			});
+		}
+		function save(mode, queryInfo) {
 			$.ajax({
 				"url" : "/sql/save",
 				"type" : "POST",
-				"data" : {
-					"id" : id,
-					"name" : name,
-					"group" : group,
-					"desc" : desc,
-					"sql" : sql
-				},
+				"data" : queryInfo,
 				"success" : function(data, textStatus){
-					if (data == "OK") {
+					if (data.status == "OK") {
 						close();
-location.reload();
+						queryInfo.id = data.id;
+						switch (mode) {
+							case SaveMode.NEW:
+							case SaveMode.EDIT:
+								app.updateTree(queryInfo);
+								break;
+							case SaveMode.UPDATE:
+								break;
+							default:
+								alert("UnknownMode: " + mode);
+								break;
+						}
 					} else {
 						alert(data);
 					}
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
 				}
 			});
 		}
 		$.extend(this, {
-			"show" : show
+			"show" : show,
+			"save" : save
 		});
 	}
 	function error(str) {
 		msgPane.message(str);
 	};
 	var sqlGrid, sqlTree, msgPane;
+	var SaveMode = {
+		"NEW" : "new",
+		"UPDATE" : "update",
+		"EDIT" : "edit"
+	};
 	flect.app.sqltool.SqlTool = function(setting) {
 		msgPane = new MessagePane(this, "#error-msg");
 		sqlGrid = new flect.util.SqlGrid({
@@ -262,42 +377,69 @@ location.reload();
 			"keepLeft" : false
 		});
 		
-		var currentId = "",
+		var currentQuery = null,
 			btnExec = $("#btnExec").click(function() {
-				var sql = $("#txtSQL").val();
-				executeSql(sql);
+				var sql = checkSql();
+				if (sql) {
+					executeSql(sql);
+				}
 			}),
 			btnSave = $("#btnSave").click(function() {
-				saveDialog.show("test", currentId);
+				var sql = checkSql();
+				if (sql) {
+					if (currentQuery) {
+						currentQuery.sql = $("#txtSQL").val();
+						saveDialog.save(SaveMode.UPDATE, currentQuery);
+					} else {
+						saveDialog.show(SaveMode.NEW, null);
+					}
+				}
 			}),
 			btnSaveAs = $("#btnSaveAs").click(function() {
-				console.log("Not implemented yet");
+				var sql = checkSql();
+				if (sql) {
+					saveDialog.show(SaveMode.NEW, null);
+				}
 			}),
-			btnRename = $("#btnRename").click(function() {
-				alert("Not implemented yet");
+			btnEdit = $("#btnEdit").click(function() {
+				var sql = checkSql();
+				if (sql && currentQuery) {
+					currentQuery.sql = sql;
+					saveDialog.show(SaveMode.EDIT, currentQuery);
+				}
+			}),
+			btnTest = $("#btnTest").click(function() {
+				var node = sqlTree.tree.getNodeByKey("Queries");
+				console.log("test: " + (node ? node.length : node));
 			}),
 			btnDelete = $("#btnDelete").click(function() {
-				if (currentId) {
-					removeQueryInfo(currentId);
+				if (currentQuery && confirm("Delete query.\nAre you sure?")) {
+					removeQueryInfo(currentQuery);
 				}
 			});
-		function removeQueryInfo(id) {
+		function checkSql() {
+			var sql = $("#txtSQL").val();
+			if (!sql) {
+				alert("SQL is required");
+				return null;
+			}
+			return sql;
+		}
+		function removeQueryInfo(queryInfo) {
 			$.ajax({
 				"url" : "/sql/delete",
 				"type" : "POST",
 				"data" : {
-					"id" : id
+					"id" : queryInfo.id
 				},
 				"success" : function(data, textStatus){
 					if (data == "OK") {
-						close();
-location.reload();
+						sqlTree.removeNode(queryInfo);
+						currentQuery = null;
+						enableButtons(false);
 					} else {
 						alert(data);
 					}
-				},
-				"error" : function(xhr, status, e) {
-					error(xhr.responseText);
 				}
 			});
 		}
@@ -306,13 +448,13 @@ location.reload();
 			sqlGrid.show().height(h).execute(sql);
 		}
 		function setQueryInfo(query) {
-			currentId = query.id;
+			currentQuery = query;
 			$("#txtSQL").val(query.sql);
 			enableButtons(true);
 			executeSql(query.sql);
 		}
 		function setTableInfo(table, columns) {
-			currentId = "";
+			currentQuery = null;
 			var sql = "SELECT A." + columns[0].name;
 			for (var i=1; i<columns.length; i++) {
 				sql += ",\n       A." + columns[i].name;
@@ -324,17 +466,31 @@ location.reload();
 		}
 		function enableButtons(b) {
 			if (b) {
-				btnRename.parent("li").removeClass("disabled");
+				btnEdit.parent("li").removeClass("disabled");
 				btnDelete.parent("li").removeClass("disabled");
 			} else {
-				btnRename.parent("li").addClass("disabled");
+				btnEdit.parent("li").addClass("disabled");
 				btnDelete.parent("li").addClass("disabled");
 			}
+		}
+		function updateTree(queryInfo) {
+console.log("updateTree1: " + JSON.stringify(queryInfo));
+			if (currentQuery && currentQuery.id == queryInfo.id) {
+				if (currentQuery.name == queryInfo.name && currentQuery.group == queryInfo.group) {
+					return;
+				}
+console.log("updateTree2: ");
+				sqlTree.removeNode(currentQuery);
+			}
+console.log("updateTree3: ");
+			sqlTree.addNode(queryInfo);
+			currentQuery = queryInfo;
 		}
 		$.extend(this, {
 			"executeSql" : executeSql,
 			"setQueryInfo" : setQueryInfo,
-			"setTableInfo" : setTableInfo
+			"setTableInfo" : setTableInfo,
+			"updateTree" : updateTree
 		});
 	}
 })(jQuery);

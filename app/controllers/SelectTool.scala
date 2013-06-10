@@ -41,13 +41,18 @@ object QueryTool extends Controller with DatabaseUtility {
 	
 	def save = Action { implicit request =>
 		val data = queryForm.bindFromRequest;
+println("save: " + request.body.asFormUrlEncoded);
 		if (data.hasErrors) {
 			BadRequest;
 		} else {
 			val info = data.get;
 			println(info);
-			man.save(info);
-			Ok("OK");
+			val newInfo = man.save(info);
+println("save: " + request.body.asFormUrlEncoded);
+			Ok(JsObject(List(
+				"id" -> JsString(newInfo.id),
+				"status" -> JsString("OK")
+			)).toString).as("application/json");
 		}
 	}
 	

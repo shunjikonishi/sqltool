@@ -14,7 +14,7 @@ case class QueryInfo(optId: Option[String] = None, name: String, group: String, 
 			"name" -> JsString(name),
 			"group" -> JsString(group),
 			"sql" -> JsString(sql),
-			"description" -> JsString(description.getOrElse(""))
+			"desc" -> JsString(description.getOrElse(""))
 		));
 	}
 }
@@ -99,7 +99,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					"insert_date" -> now,
 					"update_date" -> now
 				).executeInsert();
-			info.copy(optId=Some(id.toString));
+			info.copy(optId=Some(id.getOrElse(0).toString));
 		}
 	}
 	
