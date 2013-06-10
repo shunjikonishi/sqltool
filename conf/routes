@@ -9,6 +9,7 @@ POST    /sql/model                  controllers.SelectTool.colModel
 POST    /sql/data                   controllers.SelectTool.data
 POST    /sql/tables                 controllers.SchemaTool.tables
 POST    /sql/views                  controllers.SchemaTool.views
+POST    /sql/columns/:name          controllers.SchemaTool.columns(name)
 POST    /sql/save                   controllers.QueryTool.save
 POST    /sql/queryNode              controllers.QueryTool.queryNode
 POST    /sql/queryInfo              controllers.QueryTool.queryInfo

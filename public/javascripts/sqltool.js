@@ -43,7 +43,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function doSchemaNodeAction(node) {
 			var title = node.data.title;
-			app.executeSql("SELECT * FROM " + title);
+			$.ajax({
+				"url" : "/sql/columns/" + title,
+				"type" : "POST",
+				"success" : function(data, textStatus){
+					app.setTableInfo(title, data);
+				},
+				"error" : function(xhr, status, e) {
+					error(xhr.responseText);
+				}
+			});
 		}
 		function isQueryNode(node) {
 			return node.data.kind == "query";
@@ -271,9 +280,20 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 			$("#txtSQL").val(query.sql);
 			executeSql(query.sql);
 		}
+		function setTableInfo(table, columns) {
+			currentId = "";
+			var sql = "SELECT A." + columns[0].name;
+			for (var i=1; i<columns.length; i++) {
+				sql += ",\n       A." + columns[i].name;
+			}
+			sql += "\n  FROM " + table + " A";
+			$("#txtSQL").val(sql);
+			executeSql(sql);
+		}
 		$.extend(this, {
 			"executeSql" : executeSql,
-			"setQueryInfo" : setQueryInfo
+			"setQueryInfo" : setQueryInfo,
+			"setTableInfo" : setTableInfo
 		});
 	}
 })(jQuery);

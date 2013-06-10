@@ -5,6 +5,7 @@ import play.api.mvc.Controller;
 import play.api.libs.json.JsArray;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.JsString;
+import play.api.libs.json.JsNumber;
 import scala.collection.mutable.ListBuffer;
 
 /**
@@ -37,5 +38,26 @@ class SchemaTool(val databaseName: String) extends Controller with DatabaseUtili
 		}
 	}
 	
+	def columns(name: String) = Action { implicit request =>
+		withConnection { con =>
+			val meta = con.getMetaData;
+			val list = using(meta.getColumns(null, null, name, null)) { rs =>
+				val buf = new ListBuffer[JsObject];
+				while (rs.next) {
+					val name = rs.getString(4);
+					val dataType = rs.getInt(5);
+					val typeName = rs.getString(6);
+					
+					buf += JsObject(List(
+						"name" -> JsString(name),
+						"dataType" -> JsNumber(dataType),
+						"typeName" -> JsString(typeName)
+					));
+				}
+				buf
+			} 
+			Ok(JsArray(list).toString).as("application/json");
+		}
+	}
 }
 

@@ -64,6 +64,7 @@
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;	-moz-box-sizing: border-box;
+	font-family: monospace;
 }
 #grid-pane {
 	width: 100%;
