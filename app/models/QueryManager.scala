@@ -26,6 +26,8 @@ trait QueryManager {
 	
 	def save(info:QueryInfo): QueryInfo;
 	def getQueryInfo(id: String): Option[QueryInfo];
+	
+	def delete(id: String): Unit;
 }
 
 import anorm._;
@@ -101,10 +103,17 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 		}
 	}
 	
+	def delete(id: String): Unit = withConnection { implicit con =>
+		SQL("DELETE FROM sqltool_sql WHERE id = {id}")
+			.on(
+				"id" -> Integer.parseInt(id)
+			).executeUpdate();
+	}
+	
 	def getGroupList(parent: String): List[String] = withConnection { implicit con =>
 		if (parent == "") {
 			SQL("""
-					SELECT distinct groupname FROM sqltool_sql
+					SELECT distinct groupname FROM sqltool_sql WHERE groupname <> ''
 				"""
 				).apply.map{ row =>
 					val g = row[String]("groupname");

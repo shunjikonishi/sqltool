@@ -51,9 +51,18 @@ object QueryTool extends Controller with DatabaseUtility {
 		}
 	}
 	
+	def delete = Action { implicit request =>
+		val id = Params(request).get("id");
+		if (id.isEmpty) {
+			BadRequest;
+		} else {
+			man.delete(id.get);
+			Ok("OK");
+		}
+	}
+	
 	def queryNode = Action { implicit request =>
 		val group = Params(request).get("group").getOrElse("");
-println("Group = [" + group + "]");
 		val gList = man.getGroupList(group).map(g => ("", g, "group", if (group == "") g else group + "/" + g));
 		val qList = man.getQueryList(group).map( q => (q.id, q.name, "query", group));
 		val ret = (gList ::: qList ::: Nil).map { case (i, n, k, g) =>
@@ -64,7 +73,6 @@ println("Group = [" + group + "]");
 				"group" -> JsString(g) 
 			));
 		}
-println("Ret = " + ret);
 		Ok(JsArray(ret).toString).as("application/json");
 	}
 	

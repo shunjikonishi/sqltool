@@ -31,8 +31,19 @@ $(document).ready(function() {
 		<div id="tree-pane">Tree</div>
 		<div id="sql-pane">
 			<div id="toolbar">
-				<button class="btn btn-info" id="btnExec">Execute</button>
-				<button class="btn btn-info" id="btnSave">Save</button>
+				<button class="tool-btn btn btn-info" id="btnExec">Execute</button>
+				<div class="btn-group">
+					<button class="tool-btn btn btn-info" id="btnSave">Save</button>
+					<button class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li><a href="#" id="btnSaveAs">Save as</a></li>
+						<li class="disabled"><a href="#" id="btnRename">Rename</a></li>
+						<li class="divider"></li>
+						<li class="disabled"><a href="#" id="btnDelete">Delete</a></li>
+					</ul>
+				</div>
 			</div>
 			<div id="sql-tab">
 				<ul>
@@ -58,7 +69,7 @@ $(document).ready(function() {
 		<ul>
 			<li><label>Name</label><input type="text" id="sql-name"></li>
 			<li><label>Group</label><input type="text" id="sql-group"></li>
-			<li><label>Group</label><textarea id="sql-desc"></textarea>
+			<li><label>Description</label><textarea id="sql-desc"></textarea>
 		</ul>
 	</fieldset>
 </div>

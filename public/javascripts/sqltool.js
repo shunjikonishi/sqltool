@@ -138,7 +138,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		var tree = $(el).dynatree({
 			"onActivate" : activate,
-			"onClick" : activate,
 			"onLazyRead" : function(node) {
 				var title = node.data.title;
 				if (title == TABLES) {
@@ -209,7 +208,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				alert("Name is required");
 				return;
 			}
-console.log("doSave: " + group + ", " + normalizeGroup(group));
 			group = normalizeGroup(group);
 			$.ajax({
 				"url" : "/sql/save",
@@ -224,6 +222,7 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 				"success" : function(data, textStatus){
 					if (data == "OK") {
 						close();
+location.reload();
 					} else {
 						alert(data);
 					}
@@ -252,17 +251,8 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");
 		
-		var currentId = "";
-		
-		$("#sql-tab").tabs();
-		$("#btnExec").click(function() {
-			var sql = $("#txtSQL").val();
-			executeSql(sql);
-		});
-		$("#btnSave").click(function() {
-			saveDialog.show("test", currentId);
-		});
 		$("#workspace").css("height", document.documentElement.clientHeight - 40);
+		$("#sql-tab").tabs();
 		$("#workspace").splitter({
 			"orientation" : "vertical",
 			"limit" : 100
@@ -271,6 +261,46 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 			"limit" : 30,
 			"keepLeft" : false
 		});
+		
+		var currentId = "",
+			btnExec = $("#btnExec").click(function() {
+				var sql = $("#txtSQL").val();
+				executeSql(sql);
+			}),
+			btnSave = $("#btnSave").click(function() {
+				saveDialog.show("test", currentId);
+			}),
+			btnSaveAs = $("#btnSaveAs").click(function() {
+				console.log("Not implemented yet");
+			}),
+			btnRename = $("#btnRename").click(function() {
+				alert("Not implemented yet");
+			}),
+			btnDelete = $("#btnDelete").click(function() {
+				if (currentId) {
+					removeQueryInfo(currentId);
+				}
+			});
+		function removeQueryInfo(id) {
+			$.ajax({
+				"url" : "/sql/delete",
+				"type" : "POST",
+				"data" : {
+					"id" : id
+				},
+				"success" : function(data, textStatus){
+					if (data == "OK") {
+						close();
+location.reload();
+					} else {
+						alert(data);
+					}
+				},
+				"error" : function(xhr, status, e) {
+					error(xhr.responseText);
+				}
+			});
+		}
 		function executeSql(sql) {
 			var h = $("#lower-pane").height() - 120;
 			sqlGrid.show().height(h).execute(sql);
@@ -278,6 +308,7 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 		function setQueryInfo(query) {
 			currentId = query.id;
 			$("#txtSQL").val(query.sql);
+			enableButtons(true);
 			executeSql(query.sql);
 		}
 		function setTableInfo(table, columns) {
@@ -288,7 +319,17 @@ console.log("doSave: " + group + ", " + normalizeGroup(group));
 			}
 			sql += "\n  FROM " + table + " A";
 			$("#txtSQL").val(sql);
+			enableButtons(false);
 			executeSql(sql);
+		}
+		function enableButtons(b) {
+			if (b) {
+				btnRename.parent("li").removeClass("disabled");
+				btnDelete.parent("li").removeClass("disabled");
+			} else {
+				btnRename.parent("li").addClass("disabled");
+				btnDelete.parent("li").addClass("disabled");
+			}
 		}
 		$.extend(this, {
 			"executeSql" : executeSql,
