@@ -31,7 +31,9 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 			val (sql, model) = getSQLandModel;
 			Ok(model.toJson).as("application/json");
 		} catch {
-			case e: SQLException => BadRequest(e.getMessage);
+			case e: SQLException => 
+				e.printStackTrace;
+				BadRequest(e.getMessage);
 		}
 	}
 	
@@ -52,7 +54,9 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 				Ok(data.toJson).as("application/json");
 			}
 		} catch {
-			case e: SQLException => BadRequest(e.getMessage);
+			case e: SQLException => 
+				e.printStackTrace;
+				BadRequest(e.getMessage);
 		}
 	}
 	

@@ -89,4 +89,21 @@ println("save: " + request.body.asFormUrlEncoded);
 			case None => NotFound("Not found");
 		}
 	}
+	
+	import anorm._;
+	import play.api.db.DB;
+	import play.api.Play.current;
+	def test = Action { implicit request => DB.withConnection("target") { implicit con =>
+		val list = SQL("""
+select to_char(update_date,'yyyy/mm/dd') as dt,
+count(*) cnt from accounts where del_flg=true group by dt order by dt
+				"""
+				).apply.map{ row =>
+					val d = row[String]("dt");
+					val n = row[Long]("cnt");
+					(d, n);
+				}.toList;
+		println(list);
+		Ok("OK");
+	}}
 }
