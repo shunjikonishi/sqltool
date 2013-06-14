@@ -13,10 +13,14 @@ import play.api.data.Forms.optional;
 import play.api.libs.json.JsArray;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.JsString;
+import play.api.libs.json.Json;
 
 import models.QueryInfo;
+import models.QueryParam;
+import models.ParsedQuery;
 import models.QueryManager;
 import models.RdbQueryManager;
+import models.SqlToolImplicits._;
 
 object SelectTool extends jp.co.flect.play2.utils.SelectTool("target")
 object SchemaTool extends jp.co.flect.play2.utils.SchemaTool("target")
@@ -41,14 +45,12 @@ object QueryTool extends Controller with DatabaseUtility {
 	
 	def save = Action { implicit request =>
 		val data = queryForm.bindFromRequest;
-println("save: " + request.body.asFormUrlEncoded);
 		if (data.hasErrors) {
 			BadRequest;
 		} else {
 			val info = data.get;
 			println(info);
 			val newInfo = man.save(info);
-println("save: " + request.body.asFormUrlEncoded);
 			Ok(JsObject(List(
 				"id" -> JsString(newInfo.id),
 				"status" -> JsString("OK")
@@ -85,25 +87,20 @@ println("save: " + request.body.asFormUrlEncoded);
 		val id = Params(request).get("id").getOrElse("0");
 		val ret = man.getQueryInfo(id);
 		ret match {
-			case Some(info) => Ok(info.toJson.toString).as("application/json");
+			case Some(info) => Ok(Json.toJson(info));
 			case None => NotFound("Not found");
 		}
 	}
 	
-	import anorm._;
-	import play.api.db.DB;
-	import play.api.Play.current;
-	def test = Action { implicit request => DB.withConnection("target") { implicit con =>
-		val list = SQL("""
-select to_char(update_date,'yyyy/mm/dd') as dt,
-count(*) cnt from accounts where del_flg=true group by dt order by dt
-				"""
-				).apply.map{ row =>
-					val d = row[String]("dt");
-					val n = row[Long]("cnt");
-					(d, n);
-				}.toList;
-		println(list);
+	def queryParams = Action { implicit request =>
+		import anorm.SqlStatementParser;
+		
+		val sql = Params(request).get("sql").getOrElse("");
+		val parsedInfo = man.parse(sql);
+		Ok(Json.toJson(parsedInfo));
+	}
+	
+	def test = Action { implicit request => 
 		Ok("OK");
-	}}
+	}
 }

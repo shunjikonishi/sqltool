@@ -4,6 +4,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 
 (function($) {
 	$.ajaxSetup({
+		"type" : "POST",
 		"error" : function(xhr, status, e) {
 			error(xhr.responseText);
 		}
@@ -51,7 +52,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			var title = node.data.title;
 			$.ajax({
 				"url" : "/sql/columns/" + title,
-				"type" : "POST",
 				"success" : function(data, textStatus){
 					app.setTableInfo(title, data);
 				}
@@ -63,7 +63,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function doQueryNodeAction(node) {
 			$.ajax({
 				"url" : "/sql/queryInfo",
-				"type" : "POST",
 				"data" : {
 					"id" : node.data.key
 				},
@@ -75,7 +74,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function activate(node) {
 			var parent = node.getParent();
 			var title = node.data.title;
-			console.log("Node = title=" + title + ", group=" + node.data.group + ", kind=" + node.data.kind + ", id=" + node.data.key);
 			if (isSchemaNode(node)) {
 				doSchemaNodeAction(node);
 			} else if (isQueryNode(node)) {
@@ -85,7 +83,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function readSchema(url, node) {
 			$.ajax({
 				"url" : url,
-				"type" : "POST",
 				"success" : function(data, textStatus){
 					var children = [];
 					for (var i=0; i<data.length; i++) {
@@ -105,7 +102,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			$.ajax({
 				"url" : "/sql/queryNode",
-				"type" : "POST",
 				"data" : {
 					"group" : group
 				},
@@ -169,7 +165,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				parent.expand(true);
 				return;
 			}
-console.log("addNode: "  + parent + ", " + queryInfo.group);
 			if (queryInfo.group) {
 				var names = queryInfo.group.split("/");
 				for (var i=0; i<names.length; i++) {
@@ -318,7 +313,6 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 		function save(mode, queryInfo) {
 			$.ajax({
 				"url" : "/sql/save",
-				"type" : "POST",
 				"data" : queryInfo,
 				"success" : function(data, textStatus){
 					if (data.status == "OK") {
@@ -346,10 +340,130 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 			"save" : save
 		});
 	}
+	function SqlTabs(app, el) {
+		var self = this;
+		el = $(el).tabs();
+		
+		function activateSql() {
+			el.tabs("option", "active", 0);
+		}
+		function activateForm() {
+			el.tabs("option", "active", 1);
+		}
+		$.extend(this, {
+			"activateSql" : activateSql,
+			"activateForm" : activateForm
+		});
+	}
+	function SqlForm(app, form, desc) {
+		form = $(form);
+		desc = $(desc);
+		
+		var self = this,
+			builded = false;
+		function setDescription(str) {
+			desc.empty();
+			if (str) {
+				var array = str.split("\n");
+				for (var i=0; i<array.length; i++) {
+					if (i != 0) {
+						desc.append("<br>");
+					}
+					desc.append(array[i]);
+				}
+			}
+		}
+		function makeForm(params) {
+			form.empty();
+			var ul = $("<ul></ul>");
+			for (var i=0; i<params.length; i++) {
+				var name = params[i].name,
+					type = params[i].type;
+				var li = $("<li></li>"),
+					input = null;
+				li.append("<label>" + name + "</label>");
+				
+				switch (type) {
+					case "boolean":
+						input = $("<input type='checkbox'></input>");
+						break;
+					case "int":
+						input = $("<input type='number'></input>");
+						break;
+					case "date":
+						input = $("<input type='date'></input>");
+						break;
+					case "datetime":
+						input = $("<input type='datetime-local' step='1'></input>");
+						break;
+					case "string":
+						input = $("<input type='text'></input>");
+						break;
+					default:
+						throw new Exception("Invalid datatype: " + name + ": " + type);
+				}
+				input.attr({
+					"name" : name,
+					"data-type" : type
+				})
+				
+				li.append(input);
+				ul.append(li);
+			}
+			form.append(ul);
+			builded = true;
+		}
+		function getParams() {
+			var ret = [],
+				empties = [],
+				inputs = form.find(":input");
+			inputs.each(function() {
+				var el = $(this),
+					obj = {
+						"name" : el.attr("name"),
+						"type" : el.attr("data-type"),
+						"value" : el.val()
+					}
+				if (obj.value) {
+					if (obj.type == "datetime" && obj.value.length == 16) {
+						obj.value = obj.value += ":00";
+					}
+					ret.push(obj);
+				} else {
+					empties.push(obj.name);
+				}
+			});
+			if (empties.length > 0) {
+				var msg = "";
+				for (var i=0; i<empties.length; i++) {
+					if (msg != "") {
+						msg += "\n";
+					}
+					msg += empties[i] + " is required.";
+				}
+				alert(msg);
+				return null;
+			} else {
+				return ret;
+			}
+		}
+		$.extend(this, {
+			"setDescription" : setDescription,
+			"makeForm" : makeForm,
+			"getParams" : getParams,
+			"isBuilded" : function() {
+				return builded;
+			},
+			"setBuilded" : function(b) {
+				builded = b;
+				return self;
+			}
+		});
+	}
 	function error(str) {
 		msgPane.message(str);
 	};
-	var sqlGrid, sqlTree, msgPane;
+	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm;
 	var SaveMode = {
 		"NEW" : "new",
 		"UPDATE" : "update",
@@ -365,16 +479,17 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 		}),
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");
+		sqlTabs = new SqlTabs(this, "#sql-tab");
+		sqlForm = new SqlForm(this, "#formForm", "#formDesc");
 		
 		$("#workspace").css("height", document.documentElement.clientHeight - 40);
-		$("#sql-tab").tabs();
 		$("#workspace").splitter({
 			"orientation" : "vertical",
 			"limit" : 100
 		});
 		$("#upper-pane").splitter({
 			"limit" : 30,
-			"keepLeft" : false
+			"keepLeft" : true
 		});
 		
 		var currentQuery = null,
@@ -409,13 +524,16 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 				}
 			}),
 			btnTest = $("#btnTest").click(function() {
-				var node = sqlTree.tree.getNodeByKey("Queries");
-				console.log("test: " + (node ? node.length : node));
+				//alert("builded: " + sqlForm.isBuilded());
+				alert(JSON.stringify(sqlForm.getParams()));
 			}),
 			btnDelete = $("#btnDelete").click(function() {
 				if (currentQuery && confirm("Delete query.\nAre you sure?")) {
 					removeQueryInfo(currentQuery);
 				}
+			}),
+			txtSql = $("#txtSQL").change(function() {
+				sqlForm.setBuilded(false);
 			});
 		function checkSql() {
 			var sql = $("#txtSQL").val();
@@ -428,7 +546,6 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 		function removeQueryInfo(queryInfo) {
 			$.ajax({
 				"url" : "/sql/delete",
-				"type" : "POST",
 				"data" : {
 					"id" : queryInfo.id
 				},
@@ -450,8 +567,24 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 		function setQueryInfo(query) {
 			currentQuery = query;
 			$("#txtSQL").val(query.sql);
+			sqlForm.setDescription(query.desc);
 			enableButtons(true);
-			executeSql(query.sql);
+			$.ajax({
+				"url" : "/sql/queryParams",
+				"data" : {
+					"sql" : query.sql
+				},
+				"success" : function(data) {
+					console.log(JSON.stringify(data));
+					sqlForm.makeForm(data.params);
+					if (data.params.length == 0) {
+						sqlTabs.activateSql();
+						executeSql(data.sql);
+					} else {
+						sqlTabs.activateForm();
+					}
+				}
+			});
 		}
 		function setTableInfo(table, columns) {
 			currentQuery = null;
@@ -474,15 +607,12 @@ console.log("addNode: "  + parent + ", " + queryInfo.group);
 			}
 		}
 		function updateTree(queryInfo) {
-console.log("updateTree1: " + JSON.stringify(queryInfo));
 			if (currentQuery && currentQuery.id == queryInfo.id) {
 				if (currentQuery.name == queryInfo.name && currentQuery.group == queryInfo.group) {
 					return;
 				}
-console.log("updateTree2: ");
 				sqlTree.removeNode(currentQuery);
 			}
-console.log("updateTree3: ");
 			sqlTree.addNode(queryInfo);
 			currentQuery = queryInfo;
 		}

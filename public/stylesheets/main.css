@@ -41,7 +41,7 @@
 	left: 0px;
 	width: 100%;
 	height: 40px;
-	z-index: 1;
+	z-index: 10;
 }
 #toolbar .tool-btn {
 	margin: 5px 0px 5px 20px;
@@ -53,8 +53,12 @@
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;	-moz-box-sizing: border-box;
+	z-index: 5;
 }
-#text-pane {
+#sql-tab ul {
+	z-index: 5;
+}
+#text-pane, #form-pane {
 	padding-bottom: 50px;
 	width: 100%;
 	height: 100%;
@@ -69,6 +73,30 @@
 #grid-pane {
 	width: 100%;
 	height: 100%;
+}
+
+#formForm-pane {
+	box-sizing: border-box;	-moz-box-sizing: border-box;
+	padding-right: 200px;
+	width: 100%;
+	height: 100%;
+}
+
+#formDesc-pane {
+	float: right;
+	top: 0px;
+	right: 0px;
+	box-sizing: border-box;	-moz-box-sizing: border-box;
+	width: 200px;
+	height: 100%;
+	padding: 5px;
+	border: solid 1px;
+}
+
+.form-header {
+	border-bottom: double 4px;
+	display: inline-block;
+	margin-bottom: 4px;
 }
 
 /* For disabling dropdown menu of Bootstrap */

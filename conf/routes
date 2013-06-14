@@ -14,6 +14,7 @@ POST    /sql/save                   controllers.QueryTool.save
 POST    /sql/delete                 controllers.QueryTool.delete
 POST    /sql/queryNode              controllers.QueryTool.queryNode
 POST    /sql/queryInfo              controllers.QueryTool.queryInfo
+POST    /sql/queryParams            controllers.QueryTool.queryParams
 
 GET     /sql/test                   controllers.QueryTool.test
 

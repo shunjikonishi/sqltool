@@ -69,6 +69,7 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 							val datatype = (v \ "type").as[String];
 							val value = (v \ "value").as[String];
 							datatype match {
+								case "boolean" => value.toBoolean;
 								case "int" => Integer.parseInt(value);
 								case "date" => new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd").parse(value).getTime);
 								case "datetime" => new java.sql.Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(value).getTime);
