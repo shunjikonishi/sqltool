@@ -374,43 +374,58 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		}
 		function makeForm(params) {
-			form.empty();
-			var ul = $("<ul></ul>");
-			for (var i=0; i<params.length; i++) {
-				var name = params[i].name,
-					type = params[i].type;
-				var li = $("<li></li>"),
-					input = null;
-				li.append("<label>" + name + "</label>");
-				
-				switch (type) {
-					case "boolean":
-						input = $("<input type='checkbox'></input>");
-						break;
-					case "int":
-						input = $("<input type='number'></input>");
-						break;
-					case "date":
-						input = $("<input type='date'></input>");
-						break;
-					case "datetime":
-						input = $("<input type='datetime-local' step='1'></input>");
-						break;
-					case "string":
-						input = $("<input type='text'></input>");
-						break;
-					default:
-						throw new Exception("Invalid datatype: " + name + ": " + type);
+			function getOldValue(name) {
+				for (var i=0; i<oldParams.params.length; i++) {
+					var p = oldParams.params[i];
+					if (p.name == name) {
+						return p.value;
+					}
 				}
-				input.attr({
-					"name" : name,
-					"data-type" : type
-				})
-				
-				li.append(input);
-				ul.append(li);
 			}
-			form.append(ul);
+			var oldParams = getParams();
+			form.empty();
+			if (params && params.length) {
+				var ul = $("<ul></ul>");
+				for (var i=0; i<params.length; i++) {
+					var name = params[i].name,
+						type = params[i].type;
+					var li = $("<li></li>"),
+						input = null;
+					li.append("<label>" + name + "</label>");
+					
+					switch (type) {
+						case "boolean":
+							input = $("<input type='checkbox'></input>");
+							break;
+						case "int":
+							input = $("<input type='number'></input>");
+							break;
+						case "date":
+							input = $("<input type='date'></input>");
+							break;
+						case "datetime":
+							input = $("<input type='datetime-local' step='1'></input>");
+							break;
+						case "string":
+							input = $("<input type='text'></input>");
+							break;
+						default:
+							throw new Exception("Invalid datatype: " + name + ": " + type);
+					}
+					input.attr({
+						"name" : name,
+						"data-type" : type
+					});
+					var value = getOldValue(name);
+					if (value) {
+						input.val(value);
+					}
+					
+					li.append(input);
+					ul.append(li);
+				}
+				form.append(ul);
+			}
 			builded = true;
 		}
 		function getParams() {
@@ -434,17 +449,15 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				}
 			});
 			if (empties.length > 0) {
-				var msg = "";
-				for (var i=0; i<empties.length; i++) {
-					if (msg != "") {
-						msg += "\n";
-					}
-					msg += empties[i] + " is required.";
-				}
-				alert(msg);
-				return null;
+				return {
+					"error" : true,
+					"empty" : empties,
+					"params" : ret
+				};
 			} else {
-				return ret;
+				return {
+					"params" : ret
+				}
 			}
 		}
 		$.extend(this, {
@@ -496,7 +509,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			btnExec = $("#btnExec").click(function() {
 				var sql = checkSql();
 				if (sql) {
-					executeSql(sql);
+					checkSqlParams(sql);
 				}
 			}),
 			btnSave = $("#btnSave").click(function() {
@@ -562,29 +575,49 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function executeSql(sql) {
 			var h = $("#lower-pane").height() - 120;
-			sqlGrid.show().height(h).execute(sql);
+			if (sqlForm.isBuilded()) {
+				var params = sqlForm.getParams();
+				if (params.error) {
+					sqlTabs.activateForm();
+					var msg = "";
+					for (var i=0; i<params.empty.length; i++) {
+						if (msg != "") {
+							msg += "\n";
+						}
+						msg += params.empty[i] + " is required.";
+					}
+					alert(msg);
+					return;
+				}
+				sqlGrid.show().height(h).execute(sql, params.params);
+			} else {
+				checkSqlParams(sql);
+			}
+		}
+		function checkSqlParams(sql) {
+			$.ajax({
+				"url" : "/sql/queryParams",
+				"data" : {
+					"sql" : sql
+				},
+				"success" : function(data) {
+					sqlForm.makeForm(data.params);
+					if (data.params.length == 0) {
+						sqlTabs.activateSql();
+						executeSql(data.sql);
+					} else {
+						sqlGrid.hide();
+						sqlTabs.activateForm();
+					}
+				}
+			});
 		}
 		function setQueryInfo(query) {
 			currentQuery = query;
 			$("#txtSQL").val(query.sql);
 			sqlForm.setDescription(query.desc);
 			enableButtons(true);
-			$.ajax({
-				"url" : "/sql/queryParams",
-				"data" : {
-					"sql" : query.sql
-				},
-				"success" : function(data) {
-					console.log(JSON.stringify(data));
-					sqlForm.makeForm(data.params);
-					if (data.params.length == 0) {
-						sqlTabs.activateSql();
-						executeSql(data.sql);
-					} else {
-						sqlTabs.activateForm();
-					}
-				}
-			});
+			checkSqlParams(query.sql);
 		}
 		function setTableInfo(table, columns) {
 			currentQuery = null;
@@ -595,6 +628,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			sql += "\n  FROM " + table + " A";
 			$("#txtSQL").val(sql);
 			enableButtons(false);
+			sqlForm.makeForm(null);
 			executeSql(sql);
 		}
 		function enableButtons(b) {

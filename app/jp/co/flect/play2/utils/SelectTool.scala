@@ -72,7 +72,7 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 								case "boolean" => value.toBoolean;
 								case "int" => Integer.parseInt(value);
 								case "date" => new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd").parse(value).getTime);
-								case "datetime" => new java.sql.Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(value).getTime);
+								case "datetime" => new java.sql.Timestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(value).getTime);
 								case "string" => value;
 								case _ => throw new IllegalStateException(datatype + ", " + value);
 							}
@@ -89,6 +89,7 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 				val model = Cache.getOrElse[ColModel](sql, CACHE_DURATION) {
 					withConnection { con =>
 						val factory = new RdbColModelFactory(con);
+println("getSQLandModel: " + sql);
 						factory.getQueryModel(sql);
 					}
 				}
