@@ -14,15 +14,6 @@ case class QueryInfo(optId: Option[String] = None, name: String, group: String, 
 	def id = optId.getOrElse("");
 	def hasId = !optId.isEmpty;
 	
-	def toJson = {
-		JsObject(List(
-			"id" -> JsString(id),
-			"name" -> JsString(name),
-			"group" -> JsString(group),
-			"sql" -> JsString(sql),
-			"desc" -> JsString(description.getOrElse(""))
-		));
-	}
 }
 
 object QueryInfoFormat extends Format[QueryInfo] {

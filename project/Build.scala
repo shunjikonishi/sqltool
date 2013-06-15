@@ -12,7 +12,7 @@ object ApplicationBuild extends Build {
     jdbc,
     anorm,
     "com.google.code.gson" % "gson" % "2.2.2",
-    "log4j" % "log4j" % "1.2.17",
+//    "log4j" % "log4j" % "1.2.17",
     "postgresql" % "postgresql" % "9.2-1002.jdbc4"
   )
 

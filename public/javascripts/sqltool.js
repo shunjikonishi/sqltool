@@ -24,6 +24,33 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		return g;
 	}
+	function QueryInfo(data) {
+		var self = this;
+		
+		this.id = data.id;
+		this.name = data.name;
+		this.group = data.group;
+		this.sql = data.sql;
+		this.desc = data.desc;
+		
+		this.parsedSql = null;
+		
+		function getHash() { 
+			return {
+				"id" : this.id,
+				"name" : this.name,
+				"group" : this.group,
+				"sql" : this.sql,
+				"desc" : this.desc
+			};
+		}
+		function isParsed() { return this.parsedSql != null;}
+		
+		$.extend(this, {
+			"getHash" : getHash,
+			"isParsed" : isParsed
+		});
+	}
 	function MessagePane(app, el) {
 		el = $(el);
 		function message(text) {
@@ -67,7 +94,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					"id" : node.data.key
 				},
 				"success" : function(data, textStatus){
-					app.setQueryInfo(data);
+					app.setQueryInfo(new QueryInfo(data));
 				}
 			});
 		}
@@ -302,18 +329,18 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				return;
 			}
 			group = normalizeGroup(group);
-			save(mode, {
+			save(mode, new QueryInfo({
 				"id" : id,
 				"name" : name,
 				"group" : group,
 				"desc" : desc,
 				"sql" : sql
-			});
+			}));
 		}
 		function save(mode, queryInfo) {
 			$.ajax({
 				"url" : "/sql/save",
-				"data" : queryInfo,
+				"data" : queryInfo.getHash(),
 				"success" : function(data, textStatus){
 					if (data.status == "OK") {
 						close();
@@ -507,9 +534,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		
 		var currentQuery = null,
 			btnExec = $("#btnExec").click(function() {
-				var sql = checkSql();
-				if (sql) {
-					checkSqlParams(sql);
+				if (sqlForm.isBuilded() && (currentQuery == null || (currentQuery && currentQuery.isParsed()))) {
+					executeSql(currentQuery.parsedSql);
+				} else {
+					var sql = checkSql();
+					if (sql) {
+						checkSqlParams(sql);
+					}
 				}
 			}),
 			btnSave = $("#btnSave").click(function() {
@@ -547,6 +578,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}),
 			txtSql = $("#txtSQL").change(function() {
 				sqlForm.setBuilded(false);
+				if (currentQuery) {
+					currentQuery.parsedSql = null;
+				}
 			});
 		function checkSql() {
 			var sql = $("#txtSQL").val();
@@ -574,25 +608,21 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			});
 		}
 		function executeSql(sql) {
-			var h = $("#lower-pane").height() - 120;
-			if (sqlForm.isBuilded()) {
-				var params = sqlForm.getParams();
-				if (params.error) {
-					sqlTabs.activateForm();
-					var msg = "";
-					for (var i=0; i<params.empty.length; i++) {
-						if (msg != "") {
-							msg += "\n";
-						}
-						msg += params.empty[i] + " is required.";
+			var params = sqlForm.getParams();
+			if (params.error) {
+				sqlTabs.activateForm();
+				var msg = "";
+				for (var i=0; i<params.empty.length; i++) {
+					if (msg != "") {
+						msg += "\n";
 					}
-					alert(msg);
-					return;
+					msg += params.empty[i] + " is required.";
 				}
-				sqlGrid.show().height(h).execute(sql, params.params);
-			} else {
-				checkSqlParams(sql);
+				alert(msg);
+				return;
 			}
+			var h = $("#lower-pane").height() - 120;
+			sqlGrid.show().height(h).execute(sql, params.params);
 		}
 		function checkSqlParams(sql) {
 			$.ajax({
@@ -604,10 +634,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					sqlForm.makeForm(data.params);
 					if (data.params.length == 0) {
 						sqlTabs.activateSql();
-						executeSql(data.sql);
 					} else {
-						sqlGrid.hide();
 						sqlTabs.activateForm();
+					}
+					if (currentQuery) {
+						currentQuery.parsedSql = data.sql;
+					}
+					if (sqlForm.getParams().error) {
+						sqlGrid.hide();
+					} else {
+						executeSql(data.sql);
 					}
 				}
 			});
