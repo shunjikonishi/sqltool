@@ -119,3 +119,11 @@ select.ui-pg-selbox {
     margin: 0px;
     line-height: normal
 }
+
+ul label {
+	display: inline-block;
+	width: 100px;
+	height: 3em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

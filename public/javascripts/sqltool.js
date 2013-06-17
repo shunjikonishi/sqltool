@@ -409,6 +409,19 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					}
 				}
 			}
+			function getDefaultDate(bTime) {
+				function pad(n) {
+					return n < 10 ? "0" + n : "" + n;
+				}
+				var d = new Date(),
+					ret = d.getFullYear() + "-" +
+						pad(d.getMonth() + 1) + "-" +
+						pad(d.getDate());
+				if (bTime) {
+					ret += "T00:00:00";
+				}
+				return ret;
+			}
 			var oldParams = getParams();
 			form.empty();
 			if (params && params.length) {
@@ -429,9 +442,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							break;
 						case "date":
 							input = $("<input type='date'></input>");
+							input.attr("value", getDefaultDate(false));
 							break;
 						case "datetime":
 							input = $("<input type='datetime-local' step='1'></input>");
+							input.attr("value", getDefaultDate(true));
 							break;
 						case "string":
 							input = $("<input type='text'></input>");
