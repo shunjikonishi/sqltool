@@ -369,7 +369,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 	}
 	function SqlTabs(app, el) {
 		var self = this;
-		el = $(el).tabs();
+		el = $(el).tabs({
+			"beforeActivate" : function(event, ui) {
+				if (!sqlForm.isBuilded() && ui.newPanel.attr("id") == "form-pane") {
+					var sql = $("#txtSQL").val();
+					app.checkSqlParams(sql, false);
+				}
+			}
+		});
 		
 		function activateSql() {
 			el.tabs("option", "active", 0);
@@ -554,7 +561,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				} else {
 					var sql = checkSql();
 					if (sql) {
-						checkSqlParams(sql);
+						checkSqlParams(sql, true);
 					}
 				}
 			}),
@@ -639,7 +646,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			var h = $("#lower-pane").height() - 120;
 			sqlGrid.show().height(h).execute(sql, params.params);
 		}
-		function checkSqlParams(sql) {
+		function checkSqlParams(sql, bExec) {
 			$.ajax({
 				"url" : "/sql/queryParams",
 				"data" : {
@@ -655,10 +662,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					if (currentQuery) {
 						currentQuery.parsedSql = data.sql;
 					}
-					if (sqlForm.getParams().error) {
-						sqlGrid.hide();
-					} else {
-						executeSql(data.sql);
+					if (bExec) {
+						if (sqlForm.getParams().error) {
+							sqlGrid.hide();
+						} else {
+							executeSql(data.sql);
+						}
 					}
 				}
 			});
@@ -668,7 +677,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			$("#txtSQL").val(query.sql);
 			sqlForm.setDescription(query.desc);
 			enableButtons(true);
-			checkSqlParams(query.sql);
+			checkSqlParams(query.sql, true);
 		}
 		function setTableInfo(table, columns) {
 			currentQuery = null;
@@ -705,7 +714,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"executeSql" : executeSql,
 			"setQueryInfo" : setQueryInfo,
 			"setTableInfo" : setTableInfo,
-			"updateTree" : updateTree
+			"updateTree" : updateTree,
+			"checkSqlParams" : checkSqlParams
 		});
 	}
 })(jQuery);
