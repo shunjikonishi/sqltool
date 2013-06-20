@@ -1,4 +1,4 @@
-@()(implicit lang: Lang)
+@(importInsert: Int, importUpdate: Int)(implicit lang: Lang)
 
 @base("SQLTool") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/jqgrid/css/ui.jqgrid.css")' />
@@ -12,8 +12,12 @@
 <script>
 var app;
 $(document).ready(function() {
+	var settings = {
+		"importInsert" : @importInsert,
+		"importUpdate" : @importUpdate
+	}
 	$.fn.button.noConflict();
-	app = new flect.app.sqltool.SqlTool();
+	app = new flect.app.sqltool.SqlTool(settings);
 });
 </script>
 <div id="header" class="navbar navbar-inverse">
@@ -21,7 +25,21 @@ $(document).ready(function() {
 		<div class="container-fluid">
 			<span class="brand" class="active">SQLTool</span>
 			<ul class="nav">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">File<b class="caret"></b></a>
+					<ul class="dropdown-menu">
+						<li><a href="#" id="btnExport">Export</a></li>
+						<li><a href="#" id="btnImport">Import</a></li>
+					</ul>
+				</li>
 				<li><a href="@routes.Assets.at("ja/manual.html")">How to use</a></li>
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Language<b class="caret"></b></a>
+					<ul class="dropdown-menu">
+						<li><a href="#">English</a></li>
+						<li><a href="#">Japanese</a></li>
+					</ul>
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -83,4 +101,7 @@ $(document).ready(function() {
 		</ul>
 	</fieldset>
 </div>
+<form id="importForm" style="position:absolute;top:0;left:-1000px" action="/sql/import.sql" method="post" enctype="multipart/form-data">
+	<input type="file" name="file" id="importFile">
+</form>
 }

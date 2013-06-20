@@ -9,6 +9,14 @@ import play.api.libs.json.Format;
 import jp.co.flect.rdb.SelectTokenizer;
 import scala.collection.mutable.ListBuffer;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
+
+
 case class QueryInfo(optId: Option[String] = None, name: String, group: String, sql: String, description: Option[String]) {
 	
 	def id = optId.getOrElse("");
@@ -76,6 +84,7 @@ trait QueryManager {
 	
 	def save(info:QueryInfo): QueryInfo;
 	def getQueryInfo(id: String): Option[QueryInfo];
+	def getQueryInfo(group: String, name: String): Option[QueryInfo];
 	
 	def delete(id: String): Unit;
 	
@@ -104,6 +113,9 @@ trait QueryManager {
 		}
 		ParsedQuery(ret.toString, list.toList);
 	}
+	
+	def exportTo(file: File): Unit;
+	def importFrom(file: File): (Int, Int);
 }
 
 import anorm._;
@@ -219,6 +231,105 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 		SQL(SELECT_STATEMENT + "WHERE id = {id}").on(
 				"id" -> Integer.parseInt(id)
 			).apply().map(rowToInfo(_)).headOption;
+	}
+	
+	def getQueryInfo(group: String, name: String): Option[QueryInfo] = withConnection { implicit con =>
+		SQL(SELECT_STATEMENT + "WHERE groupname = {group} AND name = {name}").on(
+				"group" -> group,
+				"name" -> name
+			).apply().map(rowToInfo(_)).headOption;
+	}
+	
+	def exportTo(file: File): Unit = withConnection { implicit con =>
+		val writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
+		try {
+			SQL(SELECT_STATEMENT + "ORDER BY groupname, name")
+				.apply().map(rowToInfo(_)).foreach { info =>
+					writer.write("-- ");
+					if (info.group.length() > 0) {
+						writer.write(info.group);
+						writer.write("/");
+					}
+					writer.write(info.name);
+					writer.write("\n");
+					
+					info.description.map { s =>
+						writer.write("/*\n");
+						writer.write(s);
+						writer.write("\n*/\n\n");
+					}
+					
+					writer.write(info.sql);
+					writer.write("\n\n");
+				}
+		} finally {
+			writer.close;
+		}
+	}
+	def importFrom(file: File): (Int, Int) = {
+		def trimEx(str: String) = {
+			str.reverse.dropWhile(c =>
+				c == ' ' || c == '\r' || c == '\n' || c == '\t'
+			).reverse.dropWhile(c =>
+				c == ' ' || c == '\r' || c == '\n' || c == '\t'
+			);
+		}
+		var insertCount, updateCount = 0;
+		def doImport(nameWithGroup: String, desc: String, sql: String) = {
+			val idx = nameWithGroup.lastIndexOf("/");
+			val (group, name) = idx match {
+				case -1 => ("", nameWithGroup);
+				case _ => (nameWithGroup.substring(0, idx), nameWithGroup.substring(idx+1));
+			};
+			val info = QueryInfo(
+				name=name,
+				group=group,
+				sql=trimEx(sql),
+				description=Option(trimEx(desc))
+			);
+			getQueryInfo(group, name) match {
+				case Some(oldInfo) =>
+					save(oldInfo.copy(sql=info.sql, description=info.description));
+					updateCount += 1;
+				case None =>
+					save(info);
+					insertCount += 1;
+			}
+		}
+		val reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+		try {
+			val nameBuf = new StringBuilder();
+			val descBuf = new StringBuilder();
+			val sqlBuf = new StringBuilder();
+			
+			var str = reader.readLine;
+			while (str != null) {
+				if (str.startsWith("--")) {
+					if (nameBuf.length > 0) {
+						doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString);
+						nameBuf.clear;
+						descBuf.clear;
+						sqlBuf.clear;
+					}
+					nameBuf.append(str.substring(2).trim);
+				} else if (str.startsWith("/*")) {
+					str = reader.readLine;
+					while (str != null && !str.startsWith("*/")) {
+						descBuf.append(str).append("\n");
+						str = reader.readLine;
+					}
+				} else {
+					sqlBuf.append(str).append("\n");
+				}
+				str = reader.readLine;
+			}
+			if (nameBuf.length > 0 && sqlBuf.length > 0) {
+				doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString);
+			}
+		} finally {
+			reader.close;
+		}
+		(insertCount, updateCount);
 	}
 }
 

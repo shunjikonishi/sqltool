@@ -12,6 +12,8 @@ object Application extends Controller {
 	}
 	
 	def main = Action { implicit request =>
-		Ok(views.html.main());
+		val importInsert = flash.get("Import-Insert").getOrElse("0").toInt;
+		val importUpdate = flash.get("Import-Update").getOrElse("0").toInt;
+		Ok(views.html.main(importInsert, importUpdate));
 	}
 }

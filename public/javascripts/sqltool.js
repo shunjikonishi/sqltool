@@ -3,6 +3,10 @@ if (typeof(flect.app) == "undefined") flect.app = {};
 if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 
 (function($) {
+	var EXECUTE_NONE = 1,
+		EXECUTE_ALWAYS = 2,
+		EXECUTE_NO_PARAMS = 3;
+	
 	$.ajaxSetup({
 		"type" : "POST",
 		"error" : function(xhr, status, e) {
@@ -373,7 +377,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"beforeActivate" : function(event, ui) {
 				if (!sqlForm.isBuilded() && ui.newPanel.attr("id") == "form-pane") {
 					var sql = $("#txtSQL").val();
-					app.checkSqlParams(sql, false);
+					app.checkSqlParams(sql, EXECUTE_NONE);
 				}
 			}
 		});
@@ -531,7 +535,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		"UPDATE" : "update",
 		"EDIT" : "edit"
 	};
-	flect.app.sqltool.SqlTool = function(setting) {
+	flect.app.sqltool.SqlTool = function(settings) {
 		msgPane = new MessagePane(this, "#error-msg");
 		sqlGrid = new flect.util.SqlGrid({
 			"modelPath" : "/sql/model",
@@ -561,7 +565,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				} else {
 					var sql = checkSql();
 					if (sql) {
-						checkSqlParams(sql, true);
+						checkSqlParams(sql, EXECUTE_ALWAYS);
 					}
 				}
 			}),
@@ -592,6 +596,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			btnTest = $("#btnTest").click(function() {
 				//alert("builded: " + sqlForm.isBuilded());
 				alert(JSON.stringify(sqlForm.getParams()));
+			}),
+			btnImport = $("#btnImport").click(function() {
+				importSql();
+			}),
+			btnExport = $("#btnExport").click(function() {
+				exportSql();
 			}),
 			btnDelete = $("#btnDelete").click(function() {
 				if (currentQuery && confirm("Delete query.\nAre you sure?")) {
@@ -646,7 +656,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			var h = $("#lower-pane").height() - 120;
 			sqlGrid.show().height(h).execute(sql, params.params);
 		}
-		function checkSqlParams(sql, bExec) {
+		function checkSqlParams(sql, execMode) {
 			$.ajax({
 				"url" : "/sql/queryParams",
 				"data" : {
@@ -662,12 +672,23 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					if (currentQuery) {
 						currentQuery.parsedSql = data.sql;
 					}
-					if (bExec) {
-						if (sqlForm.getParams().error) {
-							sqlGrid.hide();
-						} else {
-							executeSql(data.sql);
-						}
+					switch (execMode) {
+						case EXECUTE_NONE:
+							break;
+						case EXECUTE_ALWAYS:
+						case EXECUTE_NO_PARAMS:
+							var params = sqlForm.getParams();
+							if (execMode == EXECUTE_ALWAYS || params.params.length == 0) {
+								if (sqlForm.getParams().error) {
+									sqlGrid.hide();
+								} else {
+									executeSql(data.sql);
+								}
+							}
+							break;
+						default:
+							alert("IllegalExecuteMode: " + execMode);
+							break;
 					}
 				}
 			});
@@ -677,7 +698,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			$("#txtSQL").val(query.sql);
 			sqlForm.setDescription(query.desc);
 			enableButtons(true);
-			checkSqlParams(query.sql, true);
+			checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
 		}
 		function setTableInfo(table, columns) {
 			currentQuery = null;
@@ -710,6 +731,18 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			sqlTree.addNode(queryInfo);
 			currentQuery = queryInfo;
 		}
+		function exportSql() {
+			window.open("/sql/export.sql");
+		}
+		function importSql() {
+			$("#importFile").val(null).click();
+		}
+		$("#importFile").change(function() {
+			var value = $(this).val();
+			if (value) {
+				$("#importForm")[0].submit();
+			}
+		});
 		$.extend(this, {
 			"executeSql" : executeSql,
 			"setQueryInfo" : setQueryInfo,
@@ -717,5 +750,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"updateTree" : updateTree,
 			"checkSqlParams" : checkSqlParams
 		});
+		if (settings.importInsert > 0 || settings.importUpdate > 0) {
+			alert("Do import: insert=" + settings.importInsert + ", update=" + settings.importUpdate);
+		}
 	}
 })(jQuery);

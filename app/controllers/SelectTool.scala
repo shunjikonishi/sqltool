@@ -22,6 +22,8 @@ import models.QueryManager;
 import models.RdbQueryManager;
 import models.SqlToolImplicits._;
 
+import java.io.File;
+
 object SelectTool extends jp.co.flect.play2.utils.SelectTool("target")
 object SchemaTool extends jp.co.flect.play2.utils.SchemaTool("target")
 
@@ -102,5 +104,39 @@ object QueryTool extends Controller with DatabaseUtility {
 	
 	def test = Action { implicit request => 
 		Ok("OK");
+	}
+	
+	def exportSql = Action { implicit request =>
+		val file = File.createTempFile("temp", ".sql");
+		try {
+			man.exportTo(file);
+			Ok.sendFile(file, fileName={ f=> "export.sql"}, onClose={ () => file.delete()});
+		} catch {
+			case e: Exception =>
+				e.printStackTrace;
+				Ok(e.toString);
+		}
+	}
+	
+	def importSql = Action { implicit request =>
+		request.body.asMultipartFormData match {
+			case Some(mdf) =>
+				mdf.file("file") match {
+					case Some(file) => 
+						try  {
+							val (insertCount, updateCount) = man.importFrom(file.ref.file);
+							Redirect("/main").flashing(
+								"Import-Insert" -> insertCount.toString,
+								"Import-Update" -> updateCount.toString
+							);
+						} catch {
+							case e: Exception => 
+								e.printStackTrace;
+								Ok(e.toString);
+						}
+					case None => BadRequest;
+				}
+			case None => BadRequest;
+		}
 	}
 }
