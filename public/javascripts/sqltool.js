@@ -542,7 +542,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"dataPath" : "/sql/data",
 			"div" : "#grid-pane",
 			"error" : error,
-			"effect" : "highlight"
+			"effect" : "explode"
 		}),
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");
