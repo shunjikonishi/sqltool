@@ -29,11 +29,11 @@ flect.util.SqlGrid = function(setting) {
 		alert(str);
 	}
 	function hide() {
-		div.hide();
+		div.hide(setting.effect);
 		return this;
 	}
 	function show() {
-		div.show();
+		div.show(setting.effect);
 		return this;
 	}
 	function height(v) {

@@ -541,7 +541,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"modelPath" : "/sql/model",
 			"dataPath" : "/sql/data",
 			"div" : "#grid-pane",
-			"error" : error
+			"error" : error,
+			"effect" : "highlight"
 		}),
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");
@@ -684,6 +685,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 								} else {
 									executeSql(data.sql);
 								}
+							} else {
+								sqlGrid.hide();
 							}
 							break;
 						default:
