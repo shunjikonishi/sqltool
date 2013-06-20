@@ -535,6 +535,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		"UPDATE" : "update",
 		"EDIT" : "edit"
 	};
+	
 	flect.app.sqltool.SqlTool = function(settings) {
 		msgPane = new MessagePane(this, "#error-msg");
 		sqlGrid = new flect.util.SqlGrid({
