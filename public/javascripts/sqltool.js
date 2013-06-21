@@ -540,9 +540,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		sqlGrid = new flect.util.SqlGrid({
 			"modelPath" : "/sql/model",
 			"dataPath" : "/sql/data",
+			"downloadPath" : "/sql/download",
 			"div" : "#grid-pane",
-			"error" : error,
-			"effect" : "highlight"
+			"error" : error
 		}),
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");

@@ -63,11 +63,40 @@ flect.util.SqlGrid = function(setting) {
 		});
 		return this;
 	}
+	function download(sql, params, type) {
+		var data = {
+			"sql" : sql,
+			"type" : type
+		}
+		if (params && $.isArray(params) && params.length > 0) {
+			data["sql-param"] = JSON.stringify(params);
+		}
+		var form = div.find("#" + setting.gridId + "-downloadForm");
+		if (form.length ==0) {
+			form = $("<form method='POST' target='_blank'></form>");
+			form.attr({
+				"action" : setting.downloadPath,
+				"id" : setting.gridId + "-downloadForm"
+			});
+			div.append(form);
+		}
+		form.empty();
+		for (var key in data) {
+			var input = $("<input type='hidden'></input>");
+			input.attr({
+				"name" : key,
+				"value" : data[key]
+			});
+			form.append(input);
+		}
+		form[0].submit();
+	}
 	function makeGrid(sql, colModel, params) {
 		if (grid) {
 			grid.jqGrid("GridDestroy");
 		}
 		div.empty();
+		
 		grid = $("<table/>").attr("id", setting.gridId);
 		pager = $("<div/>").attr("id", setting.gridId + "-pager");
 		div.append(grid).append(pager);
@@ -79,7 +108,8 @@ flect.util.SqlGrid = function(setting) {
 			data["sql-param"] = JSON.stringify(params);
 		}
 		
-		var t;
+		var t,
+			pagerId = "#" + setting.gridId + "-pager";
 		grid.jqGrid({
 			"url" : setting.dataPath,
 			"datatype" : "json",
@@ -111,7 +141,40 @@ flect.util.SqlGrid = function(setting) {
 				var caption = setting.gridCaption + " - (" + (t2 - t) + "ms)";
 				grid.jqGrid("setCaption", caption);
 			}
+		}).jqGrid("navGrid", pagerId, {
+			"add" : false,
+			"del" : false,
+			"edit" : false,
+			"refresh" : true,
+			"search" : false,
+			"view" : false
+		}, {
+		}).jqGrid("navButtonAdd", pagerId, {
+			"caption" : "",
+			"buttonicon" : "ui-icon-arrowthickstop-1-s",
+			"onClickButton" : function() {
+				download(sql, params, "CSV");
+			},
+			"title" : "Download as CSV"
+		}).jqGrid("navButtonAdd", pagerId, {
+			"caption" : "",
+			"buttonicon" : "ui-icon-calculator",
+			"onClickButton" : function() {
+				download(sql, params, "Excel");
+			},
+			"title" : "Download as Excel"
 		});
+		/*
+		$(pagerId + '_left').append (
+			'<div class="dropup" style="padding-left: 10px;">' +
+				'<a class="dropdown-toggle ui-icon ui-icon-arrowthickstop-1-s" data-toggle="dropdown" href="#"></a>' +
+				'<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style="z-index:100000;">'
+					+ '<li style="z-index:100000;">CSV</li>' + 
+					+ '<li style="z-index:100000;">Excel</li>' + 
+				'</ul>' + 
+			'</div>'
+		);
+		*/
 	}
 	$.extend(this, {
 		"execute" : execute,

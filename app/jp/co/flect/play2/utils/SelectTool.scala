@@ -15,7 +15,10 @@ import play.api.libs.json.JsArray;
 import jp.co.flect.javascript.jqgrid.ColModel;
 import jp.co.flect.javascript.jqgrid.RdbColModelFactory;
 import jp.co.flect.javascript.jqgrid.RdbQueryModel;
+import jp.co.flect.csv.CSVUtils;
+import jp.co.flect.excel2canvas.ExcelUtils;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.sql.Connection;
 
@@ -60,6 +63,35 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 		}
 	}
 	
+	def download = Action { implicit request =>
+		val params = Params(request);
+		val sql = params.get("sql");
+		val downloadType = params.get("type").getOrElse("CSV");
+		val sqlParams = getSQLParams(request);
+		if (sql.isEmpty) {
+			BadRequest;
+		} else {
+			val ext = if (downloadType == "Excel") ".xlsx" else ".csv";
+			val file = File.createTempFile("temp", ext);
+			withConnection { con =>
+				using(con.prepareStatement(sql.get)) { stmt =>
+					sqlParams.zipWithIndex.foreach { case (x, i) =>
+						stmt.setObject(i+1, x);
+					}
+					using(stmt.executeQuery) { rs =>
+						if (downloadType == "Excel") {
+							ExcelUtils.resultSetToExcel(rs, file);
+						} else {
+							CSVUtils.resultSetToCsv(rs, file);
+						}
+					}
+				}
+			}
+			
+			Ok.sendFile(file, fileName={ f=> "download" + ext}, onClose={ () => file.delete()});
+		}
+	}
+	
 	private def getSQLParams(implicit request: Request[AnyContent]) = {
 		Params(request).get("sql-param") match {
 			case Some(json) =>
@@ -89,7 +121,6 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 				val model = Cache.getOrElse[ColModel](sql, CACHE_DURATION) {
 					withConnection { con =>
 						val factory = new RdbColModelFactory(con);
-println("getSQLandModel: " + sql);
 						factory.getQueryModel(sql);
 					}
 				}

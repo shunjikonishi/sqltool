@@ -5,8 +5,11 @@
 # Home page
 GET     /                           controllers.Application.index
 GET     /main                       controllers.Application.main
+
 POST    /sql/model                  controllers.SelectTool.colModel
 POST    /sql/data                   controllers.SelectTool.data
+POST    /sql/download               controllers.SelectTool.download
+
 POST    /sql/tables                 controllers.SchemaTool.tables
 POST    /sql/views                  controllers.SchemaTool.views
 POST    /sql/columns/:name          controllers.SchemaTool.columns(name)
