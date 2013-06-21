@@ -18,6 +18,8 @@ POST    /sql/delete                 controllers.QueryTool.delete
 POST    /sql/queryNode              controllers.QueryTool.queryNode
 POST    /sql/queryInfo              controllers.QueryTool.queryInfo
 POST    /sql/queryParams            controllers.QueryTool.queryParams
+POST    /sql/moveGroup              controllers.QueryTool.moveGroup
+
 GET     /sql/export.sql             controllers.QueryTool.exportSql
 POST    /sql/import.sql             controllers.QueryTool.importSql
 

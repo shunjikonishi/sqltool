@@ -116,6 +116,8 @@ trait QueryManager {
 	
 	def exportTo(file: File): Unit;
 	def importFrom(file: File): (Int, Int);
+	
+	def moveGroup(oldGroup: String, newGroup: String): Unit;
 }
 
 import anorm._;
@@ -191,7 +193,40 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 		}
 	}
 	
-	def delete(id: String): Unit = withConnection { implicit con =>
+	def moveGroup(oldGroup: String, newGroup: String): Unit = withTransaction { implicit con =>
+		val idx = oldGroup.lastIndexOf("/");
+		if (newGroup == "" && idx > 0) {
+			SQL("""
+				UPDATE sqltool_sql SET groupname = substring(groupname, {len})
+				 WHERE groupname like {oldGroup}
+				"""
+				).on(
+					"len" -> (idx + 2),
+					"oldGroup" -> (oldGroup + "%")
+				).executeUpdate();
+		} else if (idx == -1) {
+			SQL("""
+				UPDATE sqltool_sql SET groupname = {newGroup} || '/' || groupname
+				 WHERE groupname like {oldGroup}
+				"""
+				).on(
+					"newGroup" -> newGroup,
+					"oldGroup" -> (oldGroup + "%")
+				).executeUpdate();
+		} else {
+			SQL("""
+				UPDATE sqltool_sql SET groupname = {newGroup} || substring(groupname, {oldLen})
+				 WHERE groupname like {oldGroup}
+				"""
+				).on(
+					"newGroup" -> newGroup,
+					"oldLen" -> (idx + 1),
+					"oldGroup" -> (oldGroup + "%")
+				).executeUpdate();
+		}
+	}
+	
+	def delete(id: String): Unit = withTransaction { implicit con =>
 		SQL("DELETE FROM sqltool_sql WHERE id = {id}")
 			.on(
 				"id" -> Integer.parseInt(id)
@@ -266,6 +301,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			writer.close;
 		}
 	}
+	
 	def importFrom(file: File): (Int, Int) = {
 		def trimEx(str: String) = {
 			str.reverse.dropWhile(c =>

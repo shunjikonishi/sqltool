@@ -70,7 +70,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			TABLES = "Tables",
 			VIEWS = "Views",
 			QUERIES = "Queries",
-			expandTarget = null;
+			expandTarget = null,
+			dragTarget = null;
 		
 		function isSchemaNode(node) {
 			if (node.getLevel() != 3) {
@@ -78,6 +79,15 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			var parent = node.getParent().getParent();
 			return parent.data.title == SCHEMAS;
+		}
+		function isQueryNode(node) {
+			return node.data.kind == "query";
+		}
+		function isGroupNode(node) {
+			return node.data.kind == "group";
+		}
+		function isQueryRoot(node) {
+			return node.getLevel() == 1 && node.data.title == QUERIES;
 		}
 		function doSchemaNodeAction(node) {
 			var title = node.data.title;
@@ -88,18 +98,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				}
 			});
 		}
-		function isQueryNode(node) {
-			return node.data.kind == "query";
-		}
 		function doQueryNodeAction(node) {
-			$.ajax({
-				"url" : "/sql/queryInfo",
-				"data" : {
-					"id" : node.data.key
-				},
-				"success" : function(data, textStatus){
-					app.setQueryInfo(new QueryInfo(data));
-				}
+			app.getQueryInfo(node.data.key, function(data) {
+				app.setQueryInfo(new QueryInfo(data), true);
 			});
 		}
 		function activate(node) {
@@ -156,6 +157,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					node.setLazyNodeStatus(DTNodeStatus_Ok);
 					if (expandTarget) {
 						addNode(expandTarget);
+					} else if (dragTarget) {
+						drop(node, dragTarget);
 					}
 				}
 			});
@@ -218,7 +221,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			parent.expand(true);
 			var newNode = getChildNode(parent, "query", queryInfo.name);
-			if (newNode == null) {
+			if (newNode == null || newNode.data.key != queryInfo.id) {
 				newNode = parent.addChild({
 					"title" : queryInfo.name,
 					"group" : parent.data.group,
@@ -237,6 +240,48 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			return false;
 		}
+		function dragStart(sourceNode) {
+			if (isGroupNode(sourceNode)) {
+				if (!isLoaded(sourceNode)) {
+					sourceNode.reloadChildren();
+				}
+				return true;
+			}
+			return isQueryNode(sourceNode);
+		}
+		function dragEnter(targetNode, sourceNode) {
+			if (targetNode == sourceNode.getParent()) {
+				return false;
+			}
+			if (isGroupNode(targetNode)) {
+				if (isGroupNode(sourceNode)) {
+					var parent = targetNode.getParent();
+					while (parent != null) {
+						if (parent == sourceNode) {
+							return false;
+						}
+						parent = parent.getParent();
+					}
+				}
+				return true;
+			}
+			return isQueryRoot(targetNode);
+		}
+		function drop(targetNode, sourceNode) {
+			if (!isLoaded(targetNode)) {
+				dragTarget = sourceNode;
+				targetNode.expand(true);
+				return;
+			}
+			dragTarget = null;
+			if (isQueryNode(sourceNode)) {
+				app.moveQuery(sourceNode.data.key, targetNode.data.group || "");
+			} else if (isGroupNode(sourceNode)) {
+				app.moveGroup(sourceNode.data.group, targetNode.data.group || "");
+			} else {
+				alert("IllegalState: " + sourceNode.data.title);
+			}
+		}
 		var tree = $(el).dynatree({
 			"onActivate" : activate,
 			"onLazyRead" : function(node) {
@@ -248,6 +293,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				} else if (title == QUERIES || node.data.group) {
 					readQueries(node.data.group, node);
 				}
+			},
+			"dnd" : {
+				"onDragStart" : dragStart,
+				"onDragEnter" : dragEnter,
+				"onDrop" : drop
 			},
 			"children" : [
 				{
@@ -284,7 +334,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		});
 	};
 	function SaveDialog(app, el) {
-		var dialog = $(el);
+		var dialog = $(el),
+			initialized = false;
 		function show(mode, queryInfo) {
 			var id = "", 
 				name = "", 
@@ -319,9 +370,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"width" : "800px",
 				"modal" : true
 			});
+			initialized = true;
 		}
 		function close() {
-			dialog.dialog("close");
+			if (initialized) {
+				dialog.dialog("close");
+			}
 		}
 		function doSave(mode, id) {
 			var name = $("#sql-name").val(),
@@ -696,12 +750,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				}
 			});
 		}
-		function setQueryInfo(query) {
+		function setQueryInfo(query, bExec) {
 			currentQuery = query;
 			$("#txtSQL").val(query.sql);
 			sqlForm.setDescription(query.desc);
 			enableButtons(true);
-			checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+			if (bExec) {
+				checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+			}
 		}
 		function setTableInfo(table, columns) {
 			currentQuery = null;
@@ -740,6 +796,43 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function importSql() {
 			$("#importFile").val(null).click();
 		}
+		function moveQuery(sourceId, newGroup) {
+			function doMoveQuery(info) {
+				var newInfo = new QueryInfo(info.getHash());
+				newInfo.group = newGroup;
+				saveDialog.save(SaveMode.EDIT, newInfo);
+			}
+			if (currentQuery && currentQuery.id == sourceId) {
+				doMoveQuery(currentQuery);
+			} else {
+				getQueryInfo(sourceId, function(data) {
+					var info = new QueryInfo(data);
+					setQueryInfo(info, false);
+					doMoveQuery(info);
+				});
+			}
+		}
+		function moveGroup(oldGroup, newGroup) {
+			$.ajax({
+				"url" : "/sql/moveGroup",
+				"data" : {
+					"oldGroup" : oldGroup,
+					"newGroup" : newGroup
+				},
+				"success" : function() {
+					location.reload();
+				}
+			});
+		}
+		function getQueryInfo(id, callback) {
+			$.ajax({
+				"url" : "/sql/queryInfo",
+				"data" : {
+					"id" : id
+				},
+				"success" : callback
+			});
+		}
 		$("#importFile").change(function() {
 			var value = $(this).val();
 			if (value) {
@@ -751,6 +844,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"setQueryInfo" : setQueryInfo,
 			"setTableInfo" : setTableInfo,
 			"updateTree" : updateTree,
+			"moveQuery" : moveQuery,
+			"moveGroup" : moveGroup,
+			"getQueryInfo" : getQueryInfo,
 			"checkSqlParams" : checkSqlParams
 		});
 		if (settings.importInsert > 0 || settings.importUpdate > 0) {

@@ -139,4 +139,16 @@ object QueryTool extends Controller with DatabaseUtility {
 			case None => BadRequest;
 		}
 	}
+	
+	def moveGroup = Action { implicit request =>
+		val params = Params(request);
+		val oldGroup = params.get("oldGroup");
+		val newGroup = params.get("newGroup");
+		if (oldGroup.isEmpty || newGroup.isEmpty) {
+			BadRequest;
+		} else {
+			man.moveGroup(oldGroup.get, newGroup.get);
+			Ok("OK");
+		}
+	}
 }
