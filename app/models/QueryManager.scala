@@ -117,7 +117,7 @@ trait QueryManager {
 	def exportTo(file: File): Unit;
 	def importFrom(file: File): (Int, Int);
 	
-	def moveGroup(oldGroup: String, newGroup: String): Unit;
+	def moveGroup(oldGroup: String, newGroup: String): String;
 }
 
 import anorm._;
@@ -193,7 +193,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 		}
 	}
 	
-	def moveGroup(oldGroup: String, newGroup: String): Unit = withTransaction { implicit con =>
+	def moveGroup(oldGroup: String, newGroup: String): String = withTransaction { implicit con =>
 		val idx = oldGroup.lastIndexOf("/");
 		if (newGroup == "" && idx > 0) {
 			SQL("""
@@ -204,6 +204,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					"len" -> (idx + 2),
 					"oldGroup" -> (oldGroup + "%")
 				).executeUpdate();
+			oldGroup.substring(idx+1);
 		} else if (idx == -1) {
 			SQL("""
 				UPDATE sqltool_sql SET groupname = {newGroup} || '/' || groupname
@@ -213,6 +214,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					"newGroup" -> newGroup,
 					"oldGroup" -> (oldGroup + "%")
 				).executeUpdate();
+			newGroup + "/" + oldGroup;
 		} else {
 			SQL("""
 				UPDATE sqltool_sql SET groupname = {newGroup} || substring(groupname, {oldLen})
@@ -223,6 +225,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					"oldLen" -> (idx + 1),
 					"oldGroup" -> (oldGroup + "%")
 				).executeUpdate();
+			newGroup + oldGroup.substring(idx);
 		}
 	}
 	

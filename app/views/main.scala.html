@@ -1,4 +1,4 @@
-@(importInsert: Int, importUpdate: Int)(implicit lang: Lang)
+@(importInsert: Int, importUpdate: Int, targetGroup: String)(implicit lang: Lang)
 
 @base("SQLTool") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/jqgrid/css/ui.jqgrid.css")' />
@@ -14,7 +14,8 @@ var app;
 $(document).ready(function() {
 	var settings = {
 		"importInsert" : @importInsert,
-		"importUpdate" : @importUpdate
+		"importUpdate" : @importUpdate,
+		"targetGroup" : "@targetGroup"
 	}
 	$.fn.button.noConflict();
 	app = new flect.app.sqltool.SqlTool(settings);

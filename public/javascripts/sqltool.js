@@ -71,7 +71,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			VIEWS = "Views",
 			QUERIES = "Queries",
 			expandTarget = null,
-			dragTarget = null;
+			dragTarget = null,
+			groupTarget = null;
 		
 		function isSchemaNode(node) {
 			if (node.getLevel() != 3) {
@@ -157,11 +158,43 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					node.setLazyNodeStatus(DTNodeStatus_Ok);
 					if (expandTarget) {
 						addNode(expandTarget);
+					} else if (groupTarget) {
+						openQueryNode(groupTarget);
 					} else if (dragTarget) {
 						drop(node, dragTarget);
 					}
 				}
 			});
+		}
+		function openQueryNode(targetGroup) {
+			var parent = tree.getNodeByKey(QUERIES);
+			while (true) {
+				if (!isLoaded(parent)) {
+					groupTarget = targetGroup;
+					parent.expand(true);
+					return;
+				}
+				groupTarget = null;
+				var children = parent.getChildren(),
+					newParent = null;
+				if (!children) {
+					return;
+				}
+				for (var i=0; i<children.length; i++) {
+					var child = children[i],
+						group = child.data.group;
+					if (group == targetGroup) {
+						return;
+					} else if (targetGroup.indexOf(group + "/") == 0) {
+						newParent = child;
+						break;
+					}
+				}
+				if (!newParent) {
+					break;
+				}
+				parent = newParent;
+			}
 		}
 		function getChildNode(node, kind, title) {
 			var children = node.getChildren();
@@ -205,9 +238,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					parent.expand();
 					var child = getChildNode(parent, "group", names[i]);
 					if (child == null) {
+						var group = names[i];
+						if (parent.data.group) {
+							group = parent.data.group + "/" + group;
+						}
 						child = parent.addChild({
 							"title" : names[i],
-							"group" : parent.data.group,
+							"group" : group,
 							"kind" : "group",
 							"isFolder" : true
 						}, getFirstQueryNode(parent));
@@ -330,6 +367,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		$.extend(this, {
 			"tree" : tree,
 			"addNode" : addNode,
+			"openQueryNode" : openQueryNode,
 			"removeNode" : removeNode
 		});
 	};
@@ -851,6 +889,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		});
 		if (settings.importInsert > 0 || settings.importUpdate > 0) {
 			alert("Do import: insert=" + settings.importInsert + ", update=" + settings.importUpdate);
+		}
+		if (settings.targetGroup) {
+			sqlTree.openQueryNode(settings.targetGroup);
 		}
 	}
 })(jQuery);

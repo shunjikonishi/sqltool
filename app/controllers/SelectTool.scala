@@ -144,11 +144,14 @@ object QueryTool extends Controller with DatabaseUtility {
 		val params = Params(request);
 		val oldGroup = params.get("oldGroup");
 		val newGroup = params.get("newGroup");
+println("test: " + oldGroup + ", " + newGroup);
 		if (oldGroup.isEmpty || newGroup.isEmpty) {
 			BadRequest;
 		} else {
-			man.moveGroup(oldGroup.get, newGroup.get);
-			Ok("OK");
+			val targetGroup = man.moveGroup(oldGroup.get, newGroup.get);
+			Ok("OK").flashing(
+				"targetGroup" -> targetGroup
+			);
 		}
 	}
 }
