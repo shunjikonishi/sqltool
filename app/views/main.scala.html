@@ -27,18 +27,18 @@ $(document).ready(function() {
 			<span class="brand" class="active">SQLTool</span>
 			<ul class="nav">
 				<li class="dropdown">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown">File<b class="caret"></b></a>
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("file")<b class="caret"></b></a>
 					<ul class="dropdown-menu">
-						<li><a href="#" id="btnExport">Export</a></li>
-						<li><a href="#" id="btnImport">Import</a></li>
+						<li><a href="#" id="btnExport">@Messages("export")</a></li>
+						<li><a href="#" id="btnImport">@Messages("import")</a></li>
 					</ul>
 				</li>
 				<li><a href="@routes.Assets.at("ja/manual.html")">How to use</a></li>
 				<li class="dropdown">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Language<b class="caret"></b></a>
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
 					<ul class="dropdown-menu">
-						<li><a href="#">English</a></li>
-						<li><a href="#">Japanese</a></li>
+						<li><a href="/i18n/setlang?lang=en">@Messages("english")</a></li>
+						<li><a href="/i18n/setlang?lang=ja">@Messages("japanese")</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -47,39 +47,39 @@ $(document).ready(function() {
 </div>
 <div id="workspace">
 	<div id="upper-pane">
-		<div id="tree-pane">Tree</div>
+		<div id="tree-pane"></div>
 		<div id="sql-pane">
 			<div id="toolbar">
-				<button class="tool-btn btn btn-info" id="btnExec">Execute</button>
+				<button class="tool-btn btn btn-info" id="btnExec">@Messages("execute")</button>
 				<div class="btn-group">
-					<button class="tool-btn btn btn-info" id="btnSave">Save</button>
+					<button class="tool-btn btn btn-info" id="btnSave">@Messages("save")</button>
 					<button class="btn btn-info dropdown-toggle" data-toggle="dropdown">
 						<span class="caret"></span>
 					</button>
 					<ul class="dropdown-menu">
-						<li><a href="#" id="btnSaveAs">Save as</a></li>
-						<li class="disabled"><a href="#" id="btnEdit">Edit</a></li>
+						<li><a href="#" id="btnSaveAs">@Messages("saveAs")</a></li>
+						<li class="disabled"><a href="#" id="btnEdit">@Messages("edit")</a></li>
 						<li class="divider"></li>
-						<li class="disabled"><a href="#" id="btnDelete">Delete</a></li>
+						<li class="disabled"><a href="#" id="btnDelete">@Messages("delete")</a></li>
 					</ul>
 				</div>
 				<button class="tool-btn btn btn-danger" id="btnTest">Test</button>
 			</div>
 			<div id="sql-tab">
 				<ul>
-					<li><a href="#text-pane">SQL</a></li>
-					<li><a href="#form-pane">Form</a></li>
+					<li><a href="#text-pane">@Messages("sql")</a></li>
+					<li><a href="#form-pane">@Messages("form")</a></li>
 				</ul>
 				<div id="text-pane">
 					<textarea id="txtSQL"></textarea>
 				</div>
 				<div id="form-pane">
 					<div id="formDesc-pane">
-						<div class="form-header">Description</div>
+						<div class="form-header">@Messages("description")</div>
 						<div id="formDesc"></div>
 					</div>
 					<div id="formForm-pane">
-						<div class="form-header">Parameters</div>
+						<div class="form-header">@Messages("parameters")</div>
 						<div id="formForm"></div>
 					</div>
 				</div>
@@ -94,11 +94,11 @@ $(document).ready(function() {
 </div>
 <div id="saveDialog" style="display:none">
 	<fieldset>
-		<legend>Save SQL</legend>
+		<legend>@Messages("saveSql")</legend>
 		<ul>
-			<li><label>Name</label><input type="text" id="sql-name"></li>
-			<li><label>Group</label><input type="text" id="sql-group"></li>
-			<li><label>Description</label><textarea id="sql-desc"></textarea>
+			<li><label>@Messages("name")</label><input type="text" id="sql-name"></li>
+			<li><label>@Messages("group")</label><input type="text" id="sql-group"></li>
+			<li><label>@Messages("description")</label><textarea id="sql-desc"></textarea>
 		</ul>
 	</fieldset>
 </div>

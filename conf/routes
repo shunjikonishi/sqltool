@@ -6,6 +6,9 @@
 GET     /                           controllers.Application.index
 GET     /main                       controllers.Application.main
 
+GET     /i18n/setlang                     controllers.I18N.setLang(lang)
+GET     /i18n/:lang/messages.js           controllers.I18N.messages(lang)
+
 POST    /sql/model                  controllers.SelectTool.colModel
 POST    /sql/data                   controllers.SelectTool.data
 POST    /sql/download               controllers.SelectTool.download
