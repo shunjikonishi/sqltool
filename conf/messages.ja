@@ -16,3 +16,13 @@ save=保存
 saveAs=名前をつけて保存
 saveSql=SQLの保存
 sql=SQL
+ui.cancel=キャンセル
+ui.confirmDelete=クエリーを削除しますか？
+ui.importResult=インポート: 新規={0}, 更新={1}
+ui.queries=クエリー
+ui.required={0}は必須です
+ui.save=保存
+ui.saveSql=SQLの保存
+ui.schemas=スキーマ
+ui.tables=テーブル
+ui.views=ビュー

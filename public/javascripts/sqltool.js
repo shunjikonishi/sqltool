@@ -5,7 +5,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 (function($) {
 	var EXECUTE_NONE = 1,
 		EXECUTE_ALWAYS = 2,
-		EXECUTE_NO_PARAMS = 3;
+		EXECUTE_NO_PARAMS = 3,
+		MSG = flect.app.sqltool.MSG;
 	
 	$.ajaxSetup({
 		"type" : "POST",
@@ -66,10 +67,10 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		});
 	}
    	function SqlTree(app, el) {
-		var SCHEMAS = "Schemas",
-			TABLES = "Tables",
-			VIEWS = "Views",
-			QUERIES = "Queries",
+		var SCHEMAS = MSG.schemas,
+			TABLES = MSG.tables,
+			VIEWS = MSG.views,
+			QUERIES = MSG.queries,
 			expandTarget = null,
 			dragTarget = null,
 			groupTarget = null;
@@ -390,16 +391,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			$("#sql-desc").val(desc);
 			
 			dialog.dialog({
-				"title" : "Save SQL",
+				"title" : MSG.saveSql,
 				"buttons" : [
 					{
-						"text" : "Save",
+						"text" : MSG.save,
 						"click" : function() { 
 							doSave(mode, id);
 						}
 					},
 					{
-						"text" : "Cancel",
+						"text" : MSG.cancel,
 						"click" : function() { 
 							close();
 						}
@@ -697,7 +698,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				exportSql();
 			}),
 			btnDelete = $("#btnDelete").click(function() {
-				if (currentQuery && confirm("Delete query.\nAre you sure?")) {
+				if (currentQuery && confirm(MSG.confirmDelete)) {
 					removeQueryInfo(currentQuery);
 				}
 			}),
@@ -710,7 +711,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function checkSql() {
 			var sql = $("#txtSQL").val();
 			if (!sql) {
-				alert("SQL is required");
+				alert(MSG.format(MSG.required, "SQL"));
 				return null;
 			}
 			return sql;
@@ -741,7 +742,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					if (msg != "") {
 						msg += "\n";
 					}
-					msg += params.empty[i] + " is required.";
+					msg += MSG.format(MSG.required, params.empty[i]);
 				}
 				alert(msg);
 				return;
@@ -888,7 +889,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"checkSqlParams" : checkSqlParams
 		});
 		if (settings.importInsert > 0 || settings.importUpdate > 0) {
-			alert("Do import: insert=" + settings.importInsert + ", update=" + settings.importUpdate);
+			alert(MSG.format(MSG.importResult, settings.importInsert, settings.importUpdate));
 		}
 		if (settings.targetGroup) {
 			sqlTree.openQueryNode(settings.targetGroup);

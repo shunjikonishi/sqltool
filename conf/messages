@@ -16,3 +16,13 @@ save=Save
 saveAs=Save as
 saveSql=Save SQL
 sql=SQL
+ui.cancel=Cancel
+ui.confirmDelete=Delete query.\nAre you sure?
+ui.importResult=Import: Insert={0}, Update={1}
+ui.queries=Queries
+ui.required={0} is required
+ui.save=Save
+ui.saveSql=Save SQL
+ui.schemas=Schemas
+ui.tables=Tables
+ui.views=Views
