@@ -17,6 +17,7 @@ flect.util.SqlGrid = function(setting) {
 		"height" : "200px",
 		"gridCaption" : "Results",
 		"gridId" : "sqlgrid",
+		"resize" : true,
 		"error" : function(str) {
 			alert(error);
 		}
@@ -164,6 +165,9 @@ flect.util.SqlGrid = function(setting) {
 			},
 			"title" : "Download as Excel"
 		});
+		if (setting.resize) {
+			grid.jqGrid("gridResize");
+		}
 		/*
 		$(pagerId + '_left').append (
 			'<div class="dropup" style="padding-left: 10px;">' +

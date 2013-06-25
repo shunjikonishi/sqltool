@@ -14,6 +14,42 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			error(xhr.responseText);
 		}
 	});
+	function Enum(values) {
+		for (var i=0; i<values.length; i++) {
+			var v = values[i];
+			this[v.name] = v;
+		}
+		$.extend(this, {
+			"fromCode" : function(v) {
+				for (var i=0; i<values.length; i++) {
+					if (values[i].code == v) return values[i];
+				}
+				return null;
+			},
+			"fromName" : function(v) {
+				for (var i=0; i<values.length; i++) {
+					if (values[i].name == v) return values[i];
+				}
+				return null;
+			},
+			"fromText" : function(v) {
+				for (var i=0; i<values.length; i++) {
+					if (values[i].text == v) return values[i];
+				}
+				return null;
+			},
+			"bindSelect" : function(el) {
+				el = $(el);
+				for (var i=0; i<values.length; i++) {
+					var v = values[i];
+					var option = $("<option></option>");
+					option.attr("value", v.code);
+					option.text(v.text);
+					el.append(option);
+				}
+			}
+		});
+	}
 	function normalizeGroup(g) {
 		if (!g) {
 			return "";
@@ -33,20 +69,24 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		var self = this;
 		
 		this.id = data.id;
+		this.kind = QueryKind.fromCode(data.kind),
 		this.name = data.name;
 		this.group = data.group;
 		this.sql = data.sql;
 		this.desc = data.desc;
+		this.setting = data.setting;
 		
 		this.parsedSql = null;
 		
 		function getHash() { 
 			return {
 				"id" : this.id,
+				"kind" : this.kind.code,
 				"name" : this.name,
 				"group" : this.group,
 				"sql" : this.sql,
-				"desc" : this.desc
+				"desc" : this.desc,
+				"setting" : this.setting
 			};
 		}
 		function isParsed() { return this.parsedSql != null;}
@@ -59,11 +99,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 	function MessagePane(app, el) {
 		el = $(el);
 		function message(text) {
+			sqlGraph.hide();
 			sqlGrid.hide();
 			el.html(text).show();
 		}
+		function hide() {
+			el.hide();
+		}
 		$.extend(this, {
-			"message" : message
+			"message" : message,
+			"hide" : hide
 		});
 	}
    	function SqlTree(app, el) {
@@ -83,10 +128,10 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			return parent.data.title == SCHEMAS;
 		}
 		function isQueryNode(node) {
-			return node.data.kind == "query";
+			return node.data.kind != QueryKind.Group;
 		}
 		function isGroupNode(node) {
-			return node.data.kind == "group";
+			return node.data.kind == QueryKind.Group;
 		}
 		function isQueryRoot(node) {
 			return node.getLevel() == 1 && node.data.title == QUERIES;
@@ -142,12 +187,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"success" : function(data, textStatus){
 					var children = [];
 					for (var i=0; i<data.length; i++) {
+						var kind = QueryKind.fromCode(data[i].kind);
 						var obj = {
 							"title" : data[i].name,
 							"group" : data[i].group,
-							"kind" : data[i].kind
+							"kind" : kind
 						};
-						if (data[i].kind == "group") {
+						if (kind == QueryKind.Group) {
 							obj.isLazy = true;
 							obj.isFolder = true;
 						} else {
@@ -217,7 +263,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			for (var i=0; i<children.length; i++) {
 				var child = children[i];
-				if (child.data.kind == "query") {
+				if (child.data.kind && child.data.kind != QueryKind.Group) {
 					return child;
 				}
 			}
@@ -237,7 +283,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				var names = queryInfo.group.split("/");
 				for (var i=0; i<names.length; i++) {
 					parent.expand();
-					var child = getChildNode(parent, "group", names[i]);
+					var child = getChildNode(parent, QueryKind.Group, names[i]);
 					if (child == null) {
 						var group = names[i];
 						if (parent.data.group) {
@@ -246,7 +292,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 						child = parent.addChild({
 							"title" : names[i],
 							"group" : group,
-							"kind" : "group",
+							"kind" : QueryKind.Group,
 							"isFolder" : true
 						}, getFirstQueryNode(parent));
 					} else if (!isLoaded(child)) {
@@ -258,13 +304,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				}
 			}
 			parent.expand(true);
-			var newNode = getChildNode(parent, "query", queryInfo.name);
+			var newNode = getChildNode(parent, queryInfo.kind, queryInfo.name);
 			if (newNode == null || newNode.data.key != queryInfo.id) {
 				newNode = parent.addChild({
 					"title" : queryInfo.name,
 					"group" : parent.data.group,
 					"key" : queryInfo.id,
-					"kind" : "query"
+					"kind" : queryInfo.kind
 				});
 			}
 			newNode.activate();
@@ -377,17 +423,20 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			initialized = false;
 		function show(mode, queryInfo) {
 			var id = "", 
+				kind = QueryKind.Query.code,
 				name = "", 
 				group = "", 
 				desc = "";
 			if (queryInfo) {
 				id = queryInfo.id;
+				kind = queryInfo.kind.code,
 				name = queryInfo.name;
 				group = queryInfo.group;
 				desc = queryInfo.desc;
 			}
 			$("#sql-name").val(name);
 			$("#sql-group").val(group);
+			$("#sql-kind").val(kind);
 			$("#sql-desc").val(desc);
 			
 			dialog.dialog({
@@ -418,6 +467,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function doSave(mode, id) {
 			var name = $("#sql-name").val(),
+				kind = $("#sql-kind").val(),
 				group = $("#sql-group").val(),
 				desc = $("#sql-desc").val();
 				sql = $("#txtSQL").val();
@@ -428,6 +478,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			group = normalizeGroup(group);
 			save(mode, new QueryInfo({
 				"id" : id,
+				"kind" : kind,
 				"name" : name,
 				"group" : group,
 				"desc" : desc,
@@ -622,12 +673,20 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 	function error(str) {
 		msgPane.message(str);
 	};
-	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm;
+	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm, sqlGraph;
 	var SaveMode = {
-		"NEW" : "new",
-		"UPDATE" : "update",
-		"EDIT" : "edit"
-	};
+			"NEW" : "new",
+			"UPDATE" : "update",
+			"EDIT" : "edit"
+		},
+		QueryKind = new Enum([
+			{ "code" : -1, "name" : "Group",     "text" : MSG.group },
+			{ "code" : 1,  "name" : "Query",     "text" : MSG.queries },
+			{ "code" : 11, "name" : "PieGraph",  "text" : MSG.pieGraph,  "graphType" : "pie" },
+			{ "code" : 12, "name" : "BarGraph",  "text" : MSG.barGraph,  "graphType" : "bar" },
+			{ "code" : 13, "name" : "LineGraph", "text" : MSG.lineGraph, "graphType" : "line" }
+		]);
+	
 	flect.app.sqltool.SqlTool = function(settings) {
 		msgPane = new MessagePane(this, "#error-msg");
 		sqlGrid = new flect.util.SqlGrid({
@@ -637,10 +696,17 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"div" : "#grid-pane",
 			"error" : error
 		}),
+		sqlGraph = new flect.util.SqlGraph({
+			"dataPath" : "/graph/data",
+			"div" : "#graph-pane",
+			"error" : error
+		});
 		saveDialog = new SaveDialog(this, "#saveDialog"),
 		sqlTree = new SqlTree(this, "#tree-pane");
 		sqlTabs = new SqlTabs(this, "#sql-tab");
 		sqlForm = new SqlForm(this, "#formForm", "#formDesc");
+		QueryKind.bindSelect("#sql-kind");
+		$("#sql-kind").find("option[value=-1]").remove();
 		
 		$("#workspace").css("height", document.documentElement.clientHeight - 40);
 		$("#workspace").splitter({
@@ -747,8 +813,15 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				alert(msg);
 				return;
 			}
-			var h = $("#lower-pane").height() - 120;
-			sqlGrid.show().height(h).execute(sql, params.params);
+			msgPane.hide();
+			sqlGraph.hide();
+			sqlGrid.hide();
+			if (currentQuery == null || currentQuery.kind == QueryKind.Query) {
+				var h = $("#lower-pane").height() - 120;
+				sqlGrid.show().height(h).execute(sql, params.params);
+			} else {
+				sqlGraph.show().execute(sql, currentQuery.kind.graphType, params.params);
+			}
 		}
 		function checkSqlParams(sql, execMode) {
 			$.ajax({

@@ -13,6 +13,8 @@ POST    /sql/model                  controllers.SelectTool.colModel
 POST    /sql/data                   controllers.SelectTool.data
 POST    /sql/download               controllers.SelectTool.download
 
+POST    /graph/data                 controllers.GraphTool.data
+
 POST    /sql/tables                 controllers.SchemaTool.tables
 POST    /sql/views                  controllers.SchemaTool.views
 POST    /sql/columns/:name          controllers.SchemaTool.columns(name)

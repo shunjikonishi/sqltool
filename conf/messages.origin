@@ -52,6 +52,9 @@ name[ja]=名前
 group=Group
 group[ja]=グループ
 
+kind=Kind
+kind[ja]=種別
+
 ui.schemas=Schemas
 ui.schemas[ja]=スキーマ
 
@@ -81,3 +84,16 @@ ui.required[ja]={0}は必須です
 
 ui.importResult=Import: Insert={0}, Update={1}
 ui.importResult[ja]=インポート: 新規={0}, 更新={1}
+
+ui.group=Group
+ui.group[ja]=グループ
+
+ui.pieGraph=Pie chart
+ui.pieGraph[ja]=円グラフ
+
+ui.barGraph=Bar chart
+ui.barGraph[ja]=棒グラフ
+
+ui.lineGraph=Line chart
+ui.lineGraph[ja]=折れ線グラフ
+
