@@ -75,6 +75,12 @@
 	height: 100%;
 }
 
+#graph-pane {
+	margin: auto;
+	margin-top: 20px;
+	width: 50%;
+	height: 80%;
+}
 #formForm-pane {
 	box-sizing: border-box;	-moz-box-sizing: border-box;
 	padding-right: 200px;

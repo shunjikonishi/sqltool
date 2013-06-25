@@ -128,7 +128,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			return parent.data.title == SCHEMAS;
 		}
 		function isQueryNode(node) {
-			return node.data.kind != QueryKind.Group;
+			return node.data.kind && node.data.kind != QueryKind.Group;
 		}
 		function isGroupNode(node) {
 			return node.data.kind == QueryKind.Group;

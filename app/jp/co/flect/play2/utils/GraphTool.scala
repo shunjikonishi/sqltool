@@ -35,9 +35,9 @@ class GraphTool(val databaseName: String) extends Controller with DatabaseUtilit
 		n == Types.SMALLINT ||
 		n == Types.TINYINT;
 		
-	case class GraphData(label: String, numbers: List[BigDecimal])
+	case class GraphData(label: String, numbers: Seq[BigDecimal])
 	
-	case class GraphInfo(numberCount: Int, data: List[GraphData])
+	case class GraphInfo(series: Seq[String], data: Seq[GraphData])
 	
 	implicit val graphDataFormat = Json.format[GraphData];
 	implicit val graphInfoFormat = Json.format[GraphInfo];
@@ -46,11 +46,13 @@ class GraphTool(val databaseName: String) extends Controller with DatabaseUtilit
 		def create(rs: ResultSet): GraphInfo = {
 			val meta = rs.getMetaData;
 			val count = meta.getColumnCount;
+			val seriesBuf = new ListBuffer[String];
 			for (idx <- 2 to count) {
 				val n = meta.getColumnType(idx);
 				if (!isNumberType(n)) {
 					throw new IllegalArgumentException("Invalid datatype: " + meta.getColumnLabel(idx) + ": " + meta.getColumnTypeName(idx));
 				}
+				seriesBuf += meta.getColumnLabel(idx);
 			}
 			val buf = new ListBuffer[GraphData];
 			while (rs.next) {
@@ -60,7 +62,7 @@ class GraphTool(val databaseName: String) extends Controller with DatabaseUtilit
 				}
 				buf += GraphData(label, numbers.toList);
 			}
-			GraphInfo(count - 1, buf.toList);
+			GraphInfo(seriesBuf.toList, buf.toList);
 		}
 	}
 	
