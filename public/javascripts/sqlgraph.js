@@ -51,7 +51,10 @@ flect.util.SqlGraph = function(setting) {
 				"position" : "se",
 				"backgroundColor" : "#D2E8FF"
 			},
-			"others" : 10
+			"others" : {
+				"count" : 10,
+				"label" : "Other"
+			}
 		}
 		if (graphSetting) {
 			pieSetting = $.extend(true, pieSetting, graphSetting);
@@ -60,14 +63,14 @@ flect.util.SqlGraph = function(setting) {
 		for (var i=0; i<data.data.length; i++) {
 			var gd = data.data[i],
 				n = [[0, gd.numbers[0]]];
-			if (i < pieSetting.others) {
+			if (i < pieSetting.others.count) {
 				array.push({
 					"data" : n,
 					"label" : gd.label
 				});
 			} else {
 				var others = array[array.length - 1];
-				others.label = "Other";
+				others.label = pieSetting.others.label;
 				others.data[0][1] += gd.numbers[0];
 			}
 		}
@@ -121,7 +124,9 @@ flect.util.SqlGraph = function(setting) {
 			},
 			"xaxis" : {
 				"showLabels" : true,
-			}
+				"labelsAngle" : 45,
+				"labelCount" : 10
+			},
 		};
 		if (graphSetting) {
 			lineSetting = $.extend(true, lineSetting, graphSetting);
@@ -133,9 +138,12 @@ flect.util.SqlGraph = function(setting) {
 				"label" : data.series[i]
 			});
 		}
-		var ticks = [];
+		var ticks = [],
+			labelMod = Math.floor(data.data.length / (lineSetting.xaxis.labelCount - 1));
 		for (var i=0; i<data.data.length; i++) {
-			ticks.push([i, data.data[i].label]);
+			if (i % labelMod == 0) {
+				ticks.push([i, data.data[i].label]);
+			}
 			for (var j=0; j<data.series.length; j++) {
 				seriesData[j].data.push([i, data.data[i].numbers[j]]);
 			}

@@ -23,6 +23,7 @@ ui.confirmDelete=クエリーを削除しますか？
 ui.group=グループ
 ui.importResult=インポート: 新規={0}, 更新={1}
 ui.lineGraph=折れ線グラフ
+ui.other=その他
 ui.pieGraph=円グラフ
 ui.queries=クエリー
 ui.required={0}は必須です

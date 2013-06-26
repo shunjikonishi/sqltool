@@ -166,7 +166,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					var children = [];
 					for (var i=0; i<data.length; i++) {
 						var obj = {
-							"title" : data[i].name
+							"title" : data[i].name,
+							"icon" : "table.png"
 						};
 						children.push(obj);
 					}
@@ -198,6 +199,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							obj.isFolder = true;
 						} else {
 							obj.key = data[i].id;
+							obj.icon = kind.icon;
 						}
 						children.push(obj);
 					}
@@ -367,6 +369,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		}
 		var tree = $(el).dynatree({
+			"imagePath" : "/assets/images/",
 			"onActivate" : activate,
 			"onLazyRead" : function(node) {
 				var title = node.data.title;
@@ -681,10 +684,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		},
 		QueryKind = new Enum([
 			{ "code" : -1, "name" : "Group",     "text" : MSG.group },
-			{ "code" : 1,  "name" : "Query",     "text" : MSG.queries },
-			{ "code" : 11, "name" : "PieGraph",  "text" : MSG.pieGraph,  "graphType" : "pie" },
-			{ "code" : 12, "name" : "BarGraph",  "text" : MSG.barGraph,  "graphType" : "bar" },
-			{ "code" : 13, "name" : "LineGraph", "text" : MSG.lineGraph, "graphType" : "line" }
+			{ "code" : 1,  "name" : "Query",     "text" : MSG.queries, "icon" : "query.png"},
+			{ "code" : 11, "name" : "PieGraph",  "text" : MSG.pieGraph,  "icon" : "pie_chart.png", "graphType" : "pie", "defaults" : {
+					"others" : {
+						"count" : 12,
+						"label" : MSG.other
+					}
+				}
+			},
+			{ "code" : 12, "name" : "BarGraph",  "text" : MSG.barGraph,  "icon" : "bar_chart.png", "graphType" : "bar" },
+			{ "code" : 13, "name" : "LineGraph", "text" : MSG.lineGraph, "icon" : "line_chart.png", "graphType" : "line" }
 		]);
 	
 	flect.app.sqltool.SqlTool = function(settings) {
@@ -820,7 +829,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				var h = $("#lower-pane").height() - 120;
 				sqlGrid.show().height(h).execute(sql, params.params);
 			} else {
-				sqlGraph.show().execute(sql, currentQuery.kind.graphType, params.params);
+				var graphSetting = $.extend({}, currentQuery.kind.defaults);
+				graphSetting.title = currentQuery.name;
+				sqlGraph.show().execute(sql, currentQuery.kind.graphType, params.params, graphSetting);
 			}
 		}
 		function checkSqlParams(sql, execMode) {

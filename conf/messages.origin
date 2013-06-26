@@ -97,3 +97,5 @@ ui.barGraph[ja]=棒グラフ
 ui.lineGraph=Line chart
 ui.lineGraph[ja]=折れ線グラフ
 
+ui.other=Other
+ui.other[ja]=その他
