@@ -45,4 +45,5 @@ ui.saveSql=Save SQL
 ui.schemas=Schemas
 ui.tables=Tables
 ui.views=Views
+useIt=Go to main
 vertical=Vertical

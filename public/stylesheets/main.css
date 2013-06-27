@@ -162,3 +162,11 @@ fieldset ul label {
 fieldset ul input[type=radio] {
 	margin: 0 10px 0 10px;
 }
+
+footer .copy-right {
+	float:right;
+	margin-right: 10px;
+}
+.hero-unit {
+	border: solid 1px;
+}

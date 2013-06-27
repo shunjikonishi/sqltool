@@ -45,4 +45,5 @@ ui.saveSql=SQLの保存
 ui.schemas=スキーマ
 ui.tables=テーブル
 ui.views=ビュー
+useIt=メイン画面
 vertical=縦
