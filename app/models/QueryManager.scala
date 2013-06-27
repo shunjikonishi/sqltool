@@ -51,6 +51,8 @@ trait QueryManager {
 	def importFrom(file: File): (Int, Int);
 	
 	def moveGroup(oldGroup: String, newGroup: String): String;
+	
+	def updateGraphSetting(id: String, setting: String): Boolean;
 }
 
 import anorm._;
@@ -141,36 +143,46 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 	}
 	
 	def moveGroup(oldGroup: String, newGroup: String): String = withTransaction { implicit con =>
+		val now = new java.sql.Timestamp(System.currentTimeMillis);
 		val idx = oldGroup.lastIndexOf("/");
 		if (newGroup == "" && idx > 0) {
 			SQL("""
-				UPDATE sqltool_sql SET groupname = substring(groupname, {len})
+				UPDATE sqltool_sql 
+				   SET groupname = substring(groupname, {len}),
+				       update_date = {update_date}
 				 WHERE groupname like {oldGroup}
 				"""
 				).on(
 					"len" -> (idx + 2),
-					"oldGroup" -> (oldGroup + "%")
+					"oldGroup" -> (oldGroup + "%"),
+					"update_date" -> now
 				).executeUpdate();
 			oldGroup.substring(idx+1);
 		} else if (idx == -1) {
 			SQL("""
-				UPDATE sqltool_sql SET groupname = {newGroup} || '/' || groupname
+				UPDATE sqltool_sql 
+				   SET groupname = {newGroup} || '/' || groupname,
+				       update_date = {update_date}
 				 WHERE groupname like {oldGroup}
 				"""
 				).on(
 					"newGroup" -> newGroup,
-					"oldGroup" -> (oldGroup + "%")
+					"oldGroup" -> (oldGroup + "%"),
+					"update_date" -> now
 				).executeUpdate();
 			newGroup + "/" + oldGroup;
 		} else {
 			SQL("""
-				UPDATE sqltool_sql SET groupname = {newGroup} || substring(groupname, {oldLen})
+				UPDATE sqltool_sql 
+				   SET groupname = {newGroup} || substring(groupname, {oldLen}),
+				       update_date = {update_date}
 				 WHERE groupname like {oldGroup}
 				"""
 				).on(
 					"newGroup" -> newGroup,
 					"oldLen" -> (idx + 1),
-					"oldGroup" -> (oldGroup + "%")
+					"oldGroup" -> (oldGroup + "%"),
+					"update_date" -> now
 				).executeUpdate();
 			newGroup + oldGroup.substring(idx);
 		}
@@ -189,6 +201,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					SELECT distinct groupname 
 					  FROM sqltool_sql
 					 WHERE groupname <> ''
+					 ORDER BY groupname
 				"""
 				).apply.map{ row =>
 					val g = row[String]("groupname");
@@ -198,6 +211,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			SQL("""
 					SELECT distinct groupname FROM sqltool_sql
 					 WHERE groupname LIKE {gl}
+					 ORDER BY groupname
 				"""
 				).on(
 					"gl" -> (parent + "/%")
@@ -209,7 +223,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 	}
 	
 	def getQueryList(parent: String): List[QueryInfo] = withConnection { implicit con =>
-		SQL(SELECT_STATEMENT + "WHERE groupname = {groupname}").on(
+		SQL(SELECT_STATEMENT + "WHERE groupname = {groupname} ORDER BY name").on(
 				"groupname" -> parent
 			).apply().map(rowToInfo(_)).toList;
 	}
@@ -242,6 +256,13 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 					writer.write(info.name);
 					writer.write("\n");
 					
+					info.setting.map { s =>
+						if (s.length > 0) {
+							writer.write("-- ");
+							writer.write(s);
+							writer.write("\n");
+						}
+					}
 					info.description.map { s =>
 						writer.write("/*\n");
 						writer.write(s);
@@ -266,7 +287,7 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			if (ret.isEmpty) null else ret;
 		}
 		var insertCount, updateCount = 0;
-		def doImport(label: String, desc: String, sql: String) = {
+		def doImport(label: String, desc: String, sql: String, setting: String) = {
 			val (kind, nameWithGroup) = if (label.startsWith("/")) {
 				QueryKind.split(label);
 			} else {
@@ -283,11 +304,11 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 				group=group,
 				sql=trimEx(sql),
 				description=Option(trimEx(desc)),
-				setting=None
+				setting=Option(trimEx(setting))
 			);
 			getQueryInfo(kind, group, name) match {
 				case Some(oldInfo) =>
-					save(oldInfo.copy(sql=info.sql, description=info.description));
+					save(oldInfo.copy(sql=info.sql, description=info.description, setting=info.setting));
 					updateCount += 1;
 				case None =>
 					save(info);
@@ -299,17 +320,24 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			val nameBuf = new StringBuilder();
 			val descBuf = new StringBuilder();
 			val sqlBuf = new StringBuilder();
+			val settingBuf = new StringBuilder();
 			
 			var str = reader.readLine;
 			while (str != null) {
 				if (str.startsWith("--")) {
-					if (nameBuf.length > 0) {
-						doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString);
-						nameBuf.clear;
-						descBuf.clear;
-						sqlBuf.clear;
+					val nameOrSetting = str.substring(2).trim;
+					if (nameBuf.length > 0 && settingBuf.length == 0 && nameOrSetting.startsWith("{")) {
+						settingBuf.append(nameOrSetting);
+					} else {
+						if (nameBuf.length > 0) {
+							doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString, settingBuf.toString);
+							nameBuf.clear;
+							descBuf.clear;
+							sqlBuf.clear;
+							settingBuf.clear;
+						}
+						nameBuf.append(nameOrSetting);
 					}
-					nameBuf.append(str.substring(2).trim);
 				} else if (str.startsWith("/*")) {
 					str = reader.readLine;
 					while (str != null && !str.startsWith("*/")) {
@@ -322,12 +350,29 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 				str = reader.readLine;
 			}
 			if (nameBuf.length > 0 && sqlBuf.length > 0) {
-				doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString);
+				doImport(nameBuf.toString, descBuf.toString, sqlBuf.toString, settingBuf.toString);
 			}
 		} finally {
 			reader.close;
 		}
 		(insertCount, updateCount);
 	}
+	
+	def updateGraphSetting(id: String, setting: String): Boolean = withTransaction { implicit con =>
+		val now = new java.sql.Timestamp(System.currentTimeMillis);
+		val ret = SQL("""
+				UPDATE sqltool_sql
+				   SET setting = {setting},
+				       update_date = {update_date}
+				 WHERE id = {id}
+			"""
+			).on(
+				"setting" -> setting, 
+				"update_date" -> now, 
+				"id" -> Integer.parseInt(id)
+			).executeUpdate();
+		ret == 1;
+	}
+	
 }
 

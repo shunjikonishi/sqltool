@@ -37,7 +37,7 @@ $(document).ready(function() {
 						<li><a href="#" id="btnImport">@Messages("import")</a></li>
 					</ul>
 				</li>
-				<li><a href="@routes.Assets.at("ja/manual.html")">How to use</a></li>
+				<li><a href="/assets/@lang.language/manual.html">@Messages("howToUse")</a></li>
 				<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown">@Messages("language")<b class="caret"></b></a>
 					<ul class="dropdown-menu">
@@ -67,7 +67,10 @@ $(document).ready(function() {
 						<li class="disabled"><a href="#" id="btnDelete">@Messages("delete")</a></li>
 					</ul>
 				</div>
+				<button id="btnGraphSetting" class="tool-btn btn btn-info" disabled>@Messages("ui.graphSetting")</button>
+				<!--
 				<button class="tool-btn btn btn-danger" id="btnTest">Test</button>
+				-->
 			</div>
 			<div id="sql-tab">
 				<ul>
@@ -78,12 +81,11 @@ $(document).ready(function() {
 					<textarea id="txtSQL"></textarea>
 				</div>
 				<div id="form-pane">
-					<div id="formDesc-pane">
-						<div class="form-header">@Messages("description")</div>
+					<div id="formDesc-pane" class="alert alert-info">
+						<div class="form-header"><strong>@Messages("description")</strong></div>
 						<div id="formDesc"></div>
 					</div>
 					<div id="formForm-pane">
-						<div class="form-header">@Messages("parameters")</div>
 						<div id="formForm"></div>
 					</div>
 				</div>
@@ -93,7 +95,9 @@ $(document).ready(function() {
 	</div>
 	<div id="lower-pane">
 		<div id="grid-pane" class="lower-child" style="display:none"></div>
-		<div id="graph-pane" class="lower-child" style="display:none"></div>
+		<div id="graph-pane" class="lower-child" style="display:none">
+			<div id="graph-canvas"></div>
+		</div>
 		<div id="error-msg" class="lower-child alert alert-error" style="display:none"></div>
 	</div>
 </div>
@@ -104,9 +108,11 @@ $(document).ready(function() {
 			<li><label>@Messages("name")</label><input type="text" id="sql-name"></li>
 			<li><label>@Messages("group")</label><input type="text" id="sql-group"></li>
 			<li><label>@Messages("kind")</label><select id="sql-kind"></select></li>
-			<li><label>@Messages("description")</label><textarea id="sql-desc"></textarea>
+			<li><label>@Messages("description")</label><textarea id="sql-desc" class="input-xxlarge" rows="5"></textarea>
 		</ul>
 	</fieldset>
+</div>
+<div id="graphSettingDialog" style="display:none">
 </div>
 <form id="importForm" style="position:absolute;top:0;left:-1000px" action="/sql/import.sql" method="post" enctype="multipart/form-data">
 	<input type="file" name="file" id="importFile">

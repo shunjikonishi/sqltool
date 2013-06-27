@@ -8,6 +8,7 @@ setting {
 	"table" : "id of table element"
 	"height" : "Height of grid",
 	"gridCaption" : "Caption of grid",
+	"effect" : "effect for showing and hiding",
 	"error" : "function of error handling. Its parameter is one string",
 	"gridId" : "id of grid"
 }

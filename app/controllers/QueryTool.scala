@@ -2,6 +2,7 @@ package controllers
 
 import play.api.mvc.Controller;
 import play.api.mvc.Action;
+import play.api.i18n.Messages;
 import jp.co.flect.play2.utils.DatabaseUtility;
 import jp.co.flect.play2.utils.Params;
 
@@ -166,6 +167,29 @@ object QueryTool extends Controller with DatabaseUtility {
 			Ok("OK").flashing(
 				"targetGroup" -> targetGroup
 			);
+		}
+	}
+	
+	def graphSetting(name: String) = Action { implicit request =>
+		val title = Messages(name.toLowerCase + "GraphSetting");
+		name.toLowerCase match {
+			case "pie" => Ok(views.html.pieSetting(title));
+			case "bar" => Ok(views.html.barSetting(title));
+			case "line" => Ok(views.html.lineSetting(title));
+			case _ => Ok("Invalid setting: " + name);
+		};
+	}
+	
+	def updateGraphSetting = Action { implicit request =>
+		val params = Params(request);
+		val id = params.get("id");
+		val setting = params.get("setting");
+		if (id.isEmpty || setting.isEmpty) {
+			BadRequest;
+		} else {
+			val ret = man.updateGraphSetting(id.get, setting.get);
+println("updateGraphSetting: " + id + ", " + ret + ", " + setting);
+			Ok("OK");
 		}
 	}
 }

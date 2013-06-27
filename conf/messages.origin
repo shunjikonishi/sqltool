@@ -99,3 +99,45 @@ ui.lineGraph[ja]=折れ線グラフ
 
 ui.other=Other
 ui.other[ja]=その他
+
+howToUse=How to use
+howToUse[ja]=使い方
+
+ui.graphSetting=Graph setting
+ui.graphSetting[ja]=グラフ設定
+
+pieGraphSetting=Pie graph setting
+pieGraphSetting[ja]=円グラフの設定
+
+barGraphSetting=Bar graph setting
+barGraphSetting[ja]=棒グラフの設定
+
+lineGraphSetting=Line graph setting
+lineGraphSetting[ja]=折れ線グラフの設定
+
+ui.noParameters=No parameters
+ui.noParameters[ja]=パラメータはありません
+
+activePie=Number of records
+activePie[ja]=有効レコード数
+
+labelCount=Number of labels
+labelCount[ja]=ラベル数
+
+barKind=Kind
+barKind[ja]=種別
+
+stacked=Stacked
+stacked[ja]=積み上げ
+
+column=Column
+column[ja]=並列
+
+direction=Direction
+direction[ja]=方向
+
+vertical=Vertical
+vertical[ja]=縦
+
+horizontal=Horizontal
+horizontal[ja]=横

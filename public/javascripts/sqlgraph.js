@@ -3,13 +3,9 @@ if (typeof(flect.util) == "undefined") flect.util = {};
 
 /*
 setting {
-	"modelPath": "Http request path for get colModel.",
 	"dataPath" : "Http request path for get query data.",
-	"table" : "id of table element"
-	"height" : "Height of grid",
-	"gridCaption" : "Caption of grid",
-	"error" : "function of error handling. Its parameter is one string",
-	"gridId" : "id of grid"
+	"container" : "Id for graph container. Used by show and hide method.",
+	"error" : "function of error handling. Its parameter is one string"
 }
 */
 flect.util.SqlGraph = function(setting) {
@@ -18,19 +14,23 @@ flect.util.SqlGraph = function(setting) {
 			alert(error);
 		}
 	}, setting);
-	var div = $(setting.div);
+	var div = $(setting.div)
+		container = div;
+	if (setting.container) {
+		container = $(setting.container);
+	}
 	
 	function hide() {
-		div.hide(setting.effect);
+		container.hide(setting.effect);
 		return this;
 	}
 	function show() {
-		div.show(setting.effect);
+		container.show(setting.effect);
 		return this;
 	}
 	function makePieGraph(data, graphSetting) {
 		var pieSetting = {
-			"HtmlText" : true,
+			"HtmlText" : false,
 			"grid" : {
 				"verticalLines" : false,
 				"horizontalLines" : false
@@ -42,10 +42,15 @@ flect.util.SqlGraph = function(setting) {
 				"showLabels" : false 
 			},
 			"pie" : {
-				"show" : true
+				"show" : true,
+				"explode" : 6
 			},
 			"mouse" : {
-				"track" : true 
+				"track" : true,
+				"relative" : true,
+				"trackFormatter": function(d) {
+					return d.series.label + ": " + d.y;
+				}
 			},
 			"legend" : {
 				"position" : "se",
@@ -63,7 +68,7 @@ flect.util.SqlGraph = function(setting) {
 		for (var i=0; i<data.data.length; i++) {
 			var gd = data.data[i],
 				n = [[0, gd.numbers[0]]];
-			if (i < pieSetting.others.count) {
+			if (i <= pieSetting.others.count) {
 				array.push({
 					"data" : n,
 					"label" : gd.label
@@ -79,7 +84,8 @@ flect.util.SqlGraph = function(setting) {
 	function makeBarGraph(data, graphSetting) {
 		var barSetting = {
 			"legend" : {
-				"backgroundColor" : "#D2E8FF" // Light blue 
+				"backgroundColor" : "#D2E8FF", // Light blue 
+				"position" : "ne"
 			},
 			"bars" : {
 				"show" : true,
@@ -95,12 +101,21 @@ flect.util.SqlGraph = function(setting) {
 			},
 			"xaxis" : {
 				"showLabels" : true,
+			},
+			"yaxis" : {
+				"showLabels" : true,
 			}
 		};
 		if (graphSetting) {
 			barSetting = $.extend(true, barSetting, graphSetting);
 		}
-		var seriesData = [];
+		var horizontal = barSetting.bars.horizontal,
+			stacked = barSetting.bars.stacked;
+		if (!stacked) {
+			barSetting.bars.barWidth = barSetting.bars.barWidth / data.series.length;
+		}
+		var seriesData = [],
+			barWidth = barSetting.bars.barWidth;
 		for (var i=0; i<data.series.length; i++) {
 			seriesData.push({
 				"data" : [],
@@ -111,10 +126,22 @@ flect.util.SqlGraph = function(setting) {
 		for (var i=0; i<data.data.length; i++) {
 			ticks.push([i, data.data[i].label]);
 			for (var j=0; j<data.series.length; j++) {
-				seriesData[j].data.push([i, data.data[i].numbers[j]]);
+				var n = i;
+				if (!stacked) {
+					n = (n + (barWidth * j)) - (barWidth * data.series.length / 2)
+				}
+				if (horizontal) {
+					seriesData[j].data.push([data.data[i].numbers[j], n]);
+				} else {
+					seriesData[j].data.push([n, data.data[i].numbers[j]]);
+				}
 			}
 		}
-		barSetting.xaxis.ticks = ticks;
+		if (horizontal) {
+			barSetting.yaxis.ticks = ticks;
+		} else {
+			barSetting.xaxis.ticks = ticks;
+		}
 		Flotr.draw(div[0], seriesData, barSetting);
 	}
 	function makeLineGraph(data, graphSetting) {

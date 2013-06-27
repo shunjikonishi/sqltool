@@ -1,0 +1,16 @@
+@(title: String)(implicit lang: Lang)
+<fieldset>
+	<legend>@title</legend>
+	<ul>
+		<li>
+			<label>@Messages("barKind")</label>
+			<input type="radio" name="bars_stacked" value="true"/>@Messages("stacked")
+			<input type="radio" name="bars_stacked" value="false"/>@Messages("column")
+		</li>
+		<li>
+			<label>@Messages("direction")</label>
+			<input type="radio" name="bars_horizontal" value="true"/>@Messages("horizontal")
+			<input type="radio" name="bars_horizontal" value="false"/>@Messages("vertical")
+		</li>
+	</ul>
+</fieldset>

@@ -74,11 +74,19 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		this.group = data.group;
 		this.sql = data.sql;
 		this.desc = data.desc;
-		this.setting = data.setting;
+		if (data.setting) {
+			this.setting = JSON.parse(data.setting);
+		} else {
+			this.setting = null;
+		}
 		
 		this.parsedSql = null;
 		
 		function getHash() { 
+			var s = this.setting;
+			if (s) {
+				s = JSON.stringify(s);
+			}
 			return {
 				"id" : this.id,
 				"kind" : this.kind.code,
@@ -86,7 +94,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"group" : this.group,
 				"sql" : this.sql,
 				"desc" : this.desc,
-				"setting" : this.setting
+				"setting" : s
 			};
 		}
 		function isParsed() { return this.parsedSql != null;}
@@ -312,7 +320,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					"title" : queryInfo.name,
 					"group" : parent.data.group,
 					"key" : queryInfo.id,
-					"kind" : queryInfo.kind
+					"kind" : queryInfo.kind,
+					"icon" : queryInfo.kind.icon
 				});
 			}
 			newNode.activate();
@@ -518,6 +527,109 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			"save" : save
 		});
 	}
+	function GraphSettingDialog(app, el) {
+		var dialog = $(el),
+			initialized = false;
+		function show(info) {
+			dialog.load("/graphsetting/" + info.kind.graphType, {}, function(data) {
+				var graphSetting = info.setting;
+				if (!graphSetting) {
+					graphSetting = $.extend(true, {}, info.kind.defaults);
+				}
+				setup(graphSetting);
+				dialog.dialog({
+					"title" : MSG.graphSetting,
+					"buttons" : [
+						{
+							"text" : MSG.save,
+							"click" : function() { 
+								doSave(info, graphSetting);
+							}
+						},
+						{
+							"text" : MSG.cancel,
+							"click" : function() { 
+								close();
+							}
+						}
+					],
+					"width" : "400px",
+					"modal" : true
+				});
+				initialized = true;
+			});
+		}
+		function setup(graphSetting) {
+			dialog.find(":input").each(function() {
+				var input = $(this),
+					names = input.attr("name").split("_"),
+					obj = graphSetting;
+				for (var i=0; i<names.length; i++) {
+					if (obj[names[i]] !== undefined) {
+						obj = obj[names[i]];
+					} else {
+						return;
+					}
+				}
+				if (input.attr("type") == "radio") {
+					obj = "" + obj;
+					if (input.attr("value") == obj) {
+						input.attr("checked", "checked");
+					}
+				} else {
+					input.val(obj);
+				}
+			});
+		}
+		function merge(graphSetting) {
+			dialog.find(":input").each(function() {
+				var input = $(this),
+					names = input.attr("name").split("_"),
+					obj = graphSetting;
+				if (input.attr("type") == "radio" && !input.is(":checked")) {
+					return;
+				}
+				for (var i=0; i<names.length-1; i++) {
+					if (!obj[names[i]]) {
+						obj[names[i]] = {};
+					}
+					obj = obj[names[i]];
+				}
+				var value = input.val();
+				if (input.attr("type") == "radio") {
+					if (value === "true") {
+						value = true;
+					} else if (value === "false") {
+						value = false;
+					}
+				}
+				obj[names[names.length-1]] = value;
+			});
+		}
+		function doSave(info, graphSetting) {
+			merge(graphSetting);
+			close();
+			$.ajax({
+				"url" : "/graph/update",
+				"data" : {
+					"id" : info.id,
+					"setting" : JSON.stringify(graphSetting)
+				},
+				"success" : function() {
+					info.setting = graphSetting;
+					app.execute();
+				}
+			});
+		}
+		function close() {
+			if (initialized) {
+				dialog.dialog("close");
+			}
+		}
+		$.extend(this, {
+			"show" : show
+		});
+	}
 	function SqlTabs(app, el) {
 		var self = this;
 		el = $(el).tabs({
@@ -624,7 +736,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					li.append(input);
 					ul.append(li);
 				}
-				form.append(ul);
+				var fieldset = $("<fieldset></fieldset>");
+				fieldset.append(ul);
+				form.append(fieldset);
+			} else {
+				form.append("<div class='noParameters'>" + MSG.noParameters + "</div>");
 			}
 			builded = true;
 		}
@@ -676,7 +792,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 	function error(str) {
 		msgPane.message(str);
 	};
-	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm, sqlGraph;
+	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm, sqlGraph,
+		saveDialog, graphSettingDialog;
 	var SaveMode = {
 			"NEW" : "new",
 			"UPDATE" : "update",
@@ -692,8 +809,19 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					}
 				}
 			},
-			{ "code" : 12, "name" : "BarGraph",  "text" : MSG.barGraph,  "icon" : "bar_chart.png", "graphType" : "bar" },
-			{ "code" : 13, "name" : "LineGraph", "text" : MSG.lineGraph, "icon" : "line_chart.png", "graphType" : "line" }
+			{ "code" : 12, "name" : "BarGraph",  "text" : MSG.barGraph,  "icon" : "bar_chart.png", "graphType" : "bar", "defaults" : {
+					"bars" : {
+						"horizontal" : false,
+						"stacked" : true
+					}
+				}
+			},
+			{ "code" : 13, "name" : "LineGraph", "text" : MSG.lineGraph, "icon" : "line_chart.png", "graphType" : "line", "defaults" : {
+					"xaxis" : {
+						"labelCount" : 10
+					}
+				}
+			}
 		]);
 	
 	flect.app.sqltool.SqlTool = function(settings) {
@@ -707,10 +835,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}),
 		sqlGraph = new flect.util.SqlGraph({
 			"dataPath" : "/graph/data",
-			"div" : "#graph-pane",
+			"container" : "#graph-pane",
+			"div" : "#graph-canvas",
 			"error" : error
 		});
 		saveDialog = new SaveDialog(this, "#saveDialog"),
+		graphSettingDialog = new GraphSettingDialog(this, "#graphSettingDialog");
 		sqlTree = new SqlTree(this, "#tree-pane");
 		sqlTabs = new SqlTabs(this, "#sql-tab");
 		sqlForm = new SqlForm(this, "#formForm", "#formDesc");
@@ -728,16 +858,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		});
 		
 		var currentQuery = null,
-			btnExec = $("#btnExec").click(function() {
-				if (sqlForm.isBuilded() && (currentQuery == null || (currentQuery && currentQuery.isParsed()))) {
-					executeSql(currentQuery.parsedSql);
-				} else {
-					var sql = checkSql();
-					if (sql) {
-						checkSqlParams(sql, EXECUTE_ALWAYS);
-					}
-				}
-			}),
+			btnExec = $("#btnExec").click(execute),
 			btnSave = $("#btnSave").click(function() {
 				var sql = checkSql();
 				if (sql) {
@@ -777,6 +898,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					removeQueryInfo(currentQuery);
 				}
 			}),
+			btnGraphSetting = $("#btnGraphSetting").click(function() {
+				graphSetting();
+			}),
 			txtSql = $("#txtSQL").change(function() {
 				sqlForm.setBuilded(false);
 				if (currentQuery) {
@@ -808,6 +932,16 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				}
 			});
 		}
+		function execute() {
+			if (sqlForm.isBuilded() && (currentQuery == null || (currentQuery && currentQuery.isParsed()))) {
+				executeSql(currentQuery.parsedSql);
+			} else {
+				var sql = checkSql();
+				if (sql) {
+					checkSqlParams(sql, EXECUTE_ALWAYS);
+				}
+			}
+		}
 		function executeSql(sql) {
 			var params = sqlForm.getParams();
 			if (params.error) {
@@ -829,7 +963,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				var h = $("#lower-pane").height() - 120;
 				sqlGrid.show().height(h).execute(sql, params.params);
 			} else {
-				var graphSetting = $.extend({}, currentQuery.kind.defaults);
+				var graphSetting = currentQuery.setting;
+				if (!graphSetting) {
+					graphSetting = currentQuery.kind.defaults;
+				}
+				graphSetting = $.extend(true, {}, graphSetting);
 				graphSetting.title = currentQuery.name;
 				sqlGraph.show().execute(sql, currentQuery.kind.graphType, params.params, graphSetting);
 			}
@@ -859,11 +997,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							if (execMode == EXECUTE_ALWAYS || params.params.length == 0) {
 								if (sqlForm.getParams().error) {
 									sqlGrid.hide();
+									sqlGraph.hide();
 								} else {
 									executeSql(data.sql);
 								}
 							} else {
 								sqlGrid.hide();
+								sqlGraph.hide();
 							}
 							break;
 						default:
@@ -901,6 +1041,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			} else {
 				btnEdit.parent("li").addClass("disabled");
 				btnDelete.parent("li").addClass("disabled");
+			}
+			if (currentQuery && currentQuery.kind.graphType) {
+				btnGraphSetting.removeAttr("disabled");
+			} else {
+				btnGraphSetting.attr("disabled", "disabled");
 			}
 		}
 		function updateTree(queryInfo) {
@@ -956,6 +1101,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"success" : callback
 			});
 		}
+		function graphSetting() {
+			if (currentQuery && currentQuery.kind.graphType) {
+				graphSettingDialog.show(currentQuery);
+			}
+		}
 		$("#importFile").change(function() {
 			var value = $(this).val();
 			if (value) {
@@ -963,7 +1113,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		});
 		$.extend(this, {
-			"executeSql" : executeSql,
+			"execute" : execute,
 			"setQueryInfo" : setQueryInfo,
 			"setTableInfo" : setTableInfo,
 			"updateTree" : updateTree,

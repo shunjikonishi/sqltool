@@ -14,6 +14,8 @@ POST    /sql/data                   controllers.SelectTool.data
 POST    /sql/download               controllers.SelectTool.download
 
 POST    /graph/data                 controllers.GraphTool.data
+POST    /graph/update               controllers.QueryTool.updateGraphSetting
+POST    /graphsetting/:name         controllers.QueryTool.graphSetting(name)
 
 POST    /sql/tables                 controllers.SchemaTool.tables
 POST    /sql/views                  controllers.SchemaTool.views
