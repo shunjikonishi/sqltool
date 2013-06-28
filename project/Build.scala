@@ -15,6 +15,8 @@ object ApplicationBuild extends Build {
 //    "log4j" % "log4j" % "1.2.17",
     "org.apache.poi" % "poi" % "3.9",
     "org.apache.poi" % "poi-ooxml" % "3.9",
+    "com.google.gdata" % "core" % "1.47.1",
+    "com.google.api.client" % "google-api-data-spreadsheet-v3" % "1.0.10-alpha",
     "postgresql" % "postgresql" % "9.2-1002.jdbc4"
   )
 
