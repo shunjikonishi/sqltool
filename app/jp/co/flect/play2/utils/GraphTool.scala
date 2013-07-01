@@ -14,9 +14,8 @@ import play.api.mvc.Request;
 import play.api.mvc.AnyContent;
 
 import play.api.libs.json.Json;
-import play.api.libs.json.JsArray;
+//import play.api.libs.json.JsArray;
 
-import java.text.SimpleDateFormat;
 import jp.co.flect.sql.DBTool;
 
 /**
@@ -83,29 +82,6 @@ class GraphTool(val databaseName: String) extends Controller with DatabaseUtilit
 			case e: SQLException => 
 				e.printStackTrace;
 				BadRequest(e.getMessage);
-		}
-	}
-	
-	private def getSQLParams(implicit request: Request[AnyContent]) = {
-		Params(request).get("sql-param") match {
-			case Some(json) =>
-				Json.parse(json) match {
-					case arr: JsArray =>
-						arr.value.map { v =>
-							val datatype = (v \ "type").as[String];
-							val value = (v \ "value").as[String];
-							datatype match {
-								case "boolean" => value.toBoolean;
-								case "int" => Integer.parseInt(value);
-								case "date" => new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd").parse(value).getTime);
-								case "datetime" => new java.sql.Timestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(value).getTime);
-								case "string" => value;
-								case _ => throw new IllegalStateException(datatype + ", " + value);
-							}
-						};
-					case _ => Nil;
-				}
-			case None => Nil;
 		}
 	}
 	

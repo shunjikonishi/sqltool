@@ -14,10 +14,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			error(xhr.responseText);
 		}
 	});
-	function Enum(values) {
+	function Enum(values, extension) {
 		for (var i=0; i<values.length; i++) {
 			var v = values[i];
 			this[v.name] = v;
+			if (typeof(extension) == "object") {
+				$.extend(v, extension);
+			}
 		}
 		$.extend(this, {
 			"fromCode" : function(v) {
@@ -47,6 +50,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					option.text(v.text);
 					el.append(option);
 				}
+				return el;
 			}
 		});
 	}
@@ -438,21 +442,33 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				kind = QueryKind.Query.code,
 				name = "", 
 				group = "", 
-				desc = "";
+				desc = "",
+				spreadsheet = "",
+				worksheet = "",
+				scheduleTime = "00:00:00";
 			if (queryInfo) {
 				id = queryInfo.id;
 				kind = queryInfo.kind.code,
 				name = queryInfo.name;
 				group = queryInfo.group;
 				desc = queryInfo.desc;
+				if (queryInfo.kind == QueryKind.Schedule) {
+					spreadsheet = queryInfo.setting.spreadsheet;
+					worksheet = queryInfo.setting.worksheet;
+					scheduleTime = queryInfo.setting.time;
+				}
 			}
 			$("#sql-name").val(name);
 			$("#sql-group").val(group);
 			$("#sql-kind").val(kind);
 			$("#sql-desc").val(desc);
+			$("#schedule-spreadsheet").val(spreadsheet);
+			$("#schedule-worksheet").val(worksheet);
+			$("#schedule-time").val(scheduleTime);
 			
 			dialog.dialog({
 				"title" : MSG.saveSql,
+				"position" : [ "center", 40],
 				"buttons" : [
 					{
 						"text" : MSG.save,
@@ -482,20 +498,39 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				kind = $("#sql-kind").val(),
 				group = $("#sql-group").val(),
 				desc = $("#sql-desc").val();
-				sql = $("#txtSQL").val();
-			if (!name) {
-				alert("Name is required");
-				return;
-			}
-			group = normalizeGroup(group);
-			save(mode, new QueryInfo({
+				sql = $("#txtSQL").val(),
+				spreadsheet = $("#schedule-spreadsheet").val(),
+				worksheet = $("#schedule-worksheet").val(),
+				scheduleTime = $("#schedule-time").val();
+			var hash = {
 				"id" : id,
 				"kind" : kind,
 				"name" : name,
 				"group" : group,
 				"desc" : desc,
 				"sql" : sql
-			}));
+			}
+			if (!name) {
+				alert(MSG.format(MSG.required, MSG.name));
+				return;
+			}
+			if (kind == QueryKind.Schedule.code) {
+				if (!spreadsheet) {
+					alert(MSG.format(MSG.requiredIfSchedule, MSG.spreadsheet));
+					return;
+				}
+				if (!worksheet) {
+					alert(MSG.format(MSG.requiredIfSchedule, MSG.worksheet));
+					return;
+				}
+				hash.setting = JSON.stringify({
+					"spreadsheet" : spreadsheet,
+					"worksheet" : worksheet,
+					"time" : scheduleTime
+				});
+			}
+			group = normalizeGroup(group);
+			save(mode, new QueryInfo(hash));
 		}
 		function save(mode, queryInfo) {
 			$.ajax({
@@ -789,10 +824,43 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		});
 	}
+	function SqlSheet(app, el) {
+		el = $(el);
+		function hide() {
+			el.hide();
+			return this;
+		}
+		function show() {
+			el.show();
+			return this;
+		}
+		function execute(info, sql) {
+			$.ajax({
+				"url" : "/google/execute",
+				"data" : {
+					"id" : info.id,
+					"sql" : sql
+				},
+				"success" : function(data) {
+					if (data == "OK") {
+						show();
+						el.find("iframe").attr("src", "/google/show/" + info.setting.spreadsheet + "/" + info.setting.worksheet);
+					} else {
+						error(data);
+					}
+				}
+			});
+		}
+		$.extend(this, {
+			"execute" : execute,
+			"show" : show,
+			"hide" : hide
+		});
+	}
 	function error(str) {
 		msgPane.message(str);
 	};
-	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm, sqlGraph,
+	var sqlGrid, sqlTree, msgPane, sqlTabs, sqlForm, sqlGraph, sqlSheet,
 		saveDialog, graphSettingDialog;
 	var SaveMode = {
 			"NEW" : "new",
@@ -821,8 +889,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 						"labelCount" : 10
 					}
 				}
+			},
+			{ "code" : 21, "name" : "Schedule", "text" : MSG.schedule, "icon" : "schedule.png"}
+		], {
+			"isGraph" : function() { 
+				return !!this.graphType;
 			}
-		]);
+		});
 	
 	flect.app.sqltool.SqlTool = function(settings) {
 		msgPane = new MessagePane(this, "#error-msg");
@@ -844,8 +917,21 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		sqlTree = new SqlTree(this, "#tree-pane");
 		sqlTabs = new SqlTabs(this, "#sql-tab");
 		sqlForm = new SqlForm(this, "#formForm", "#formDesc");
-		QueryKind.bindSelect("#sql-kind");
-		$("#sql-kind").find("option[value=-1]").remove();
+		sqlSheet = new SqlSheet(this, "#sheet-pane");
+		
+		var sqlKind = QueryKind.bindSelect("#sql-kind");
+		removeSqlKindFromSelect(QueryKind.Group);
+		if (!settings.scheduleEnabled) {
+			removeSqlKindFromSelect(QueryKind.Schedule);
+		}
+		sqlKind.change(function() {
+			var value = $(this).val();
+			if (value == QueryKind.Schedule.code) {
+				$("#schedule-setting").show();
+			} else {
+				$("#schedule-setting").hide();
+			}
+		});
 		
 		$("#workspace").css("height", document.documentElement.clientHeight - 40);
 		$("#workspace").splitter({
@@ -907,6 +993,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					currentQuery.parsedSql = null;
 				}
 			});
+		function removeSqlKindFromSelect(kind) {
+			sqlKind.find("option[value=" + kind.code + "]").remove();
+		}
 		function checkSql() {
 			var sql = $("#txtSQL").val();
 			if (!sql) {
@@ -959,9 +1048,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			msgPane.hide();
 			sqlGraph.hide();
 			sqlGrid.hide();
+			sqlSheet.hide();
 			if (currentQuery == null || currentQuery.kind == QueryKind.Query) {
 				var h = $("#lower-pane").height() - 120;
 				sqlGrid.show().height(h).execute(sql, params.params);
+			} else if (currentQuery.kind == QueryKind.Schedule) {
+				sqlSheet.execute(currentQuery, sql);
 			} else {
 				var graphSetting = currentQuery.setting;
 				if (!graphSetting) {
@@ -1049,6 +1141,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		}
 		function updateTree(queryInfo) {
+			currentQuery = queryInfo;
 			if (currentQuery && currentQuery.id == queryInfo.id) {
 				if (currentQuery.name == queryInfo.name && currentQuery.group == queryInfo.group) {
 					return;
@@ -1056,7 +1149,6 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				sqlTree.removeNode(currentQuery);
 			}
 			sqlTree.addNode(queryInfo);
-			currentQuery = queryInfo;
 		}
 		function exportSql() {
 			window.open("/sql/export.sql");

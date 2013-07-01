@@ -6,9 +6,16 @@ import play.api.mvc.AnyContent;
 import play.api.mvc.Request;
 import play.api.mvc.Result;
 
-import models.GoogleSpreadsheetManager;
+import play.api.data.Form;
+import play.api.data.Forms.tuple;
+import play.api.data.Forms.text;
 
-object GoogleTool extends Controller {
+import models.GoogleSpreadsheetManager;
+import jp.co.flect.play2.utils.DatabaseUtility;
+
+object GoogleTool extends Controller with DatabaseUtility {
+	
+	def databaseName = "target";
 	
 	private lazy val man = GoogleSpreadsheetManager();
 	
@@ -35,21 +42,42 @@ object GoogleTool extends Controller {
 			case Some(book) =>
 				man.getWorksheet(book, sheetName) match {
 					case Some(sheet) =>
-//						val url = book.getSpreadsheetLink.getHref + "#" + sheet.getId;
-						val url = sheet.getEtag;
-//println("link: " + sheet.getLink);
-println("editlink: " + sheet.getEditLink.getHref);
-println("editlink: " + sheet.getSelfLink.getHref);
-//println("editlink: " + sheet.getMediaEditLink.getHref);
-println("htmllink: " + sheet.getHtmlLink);
-println("summary: " + sheet.getSummary);
-println("source: " + sheet.getVersionId);
-						Ok(url);
+						val url = book.getSpreadsheetLink.getHref;
+						Redirect(url);
 					case None =>
 						Ok("Worksheet not found: " + bookName + "." + sheetName);
 				}
 			case None =>
 				Ok("Spreadsheet not found: " + bookName);
+		}
+	}
+	
+	private val executeForm = Form(tuple(
+		"id" -> text,
+		"sql" -> text
+	));
+	
+	def execute = filterAction { implicit request =>
+		val data = executeForm.bindFromRequest;
+		if (data.hasErrors) {
+			BadRequest;
+		} else {
+			val (id, sql) = data.get;
+			QueryTool.man.getQueryInfo(id) match {
+				case Some(info) =>
+					doExecute(info.spreadsheet, info.worksheet, sql);
+					Ok("OK");
+				case None =>
+					NotFound(id);
+			}
+		}
+	}
+	
+	private def doExecute(bookName: String, sheetName: String, sql: String): Unit = withConnection { con =>
+		using(con.prepareStatement(sql)) { stmt =>
+			using(stmt.executeQuery) { rs =>
+				man.addResultSet(bookName, sheetName, rs);
+			}
 		}
 	}
 }

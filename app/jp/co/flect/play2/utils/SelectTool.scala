@@ -9,9 +9,6 @@ import play.api.mvc.Request;
 import play.api.mvc.AnyContent;
 import play.api.cache.Cache;
 
-import play.api.libs.json.Json;
-import play.api.libs.json.JsArray;
-
 import jp.co.flect.javascript.jqgrid.ColModel;
 import jp.co.flect.javascript.jqgrid.RdbColModelFactory;
 import jp.co.flect.javascript.jqgrid.RdbQueryModel;
@@ -19,7 +16,6 @@ import jp.co.flect.csv.CSVUtils;
 import jp.co.flect.excel2canvas.ExcelUtils;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.sql.Connection;
 
 /**
@@ -89,29 +85,6 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 			}
 			
 			Ok.sendFile(file, fileName={ f=> "download" + ext}, onClose={ () => file.delete()});
-		}
-	}
-	
-	private def getSQLParams(implicit request: Request[AnyContent]) = {
-		Params(request).get("sql-param") match {
-			case Some(json) =>
-				Json.parse(json) match {
-					case arr: JsArray =>
-						arr.value.map { v =>
-							val datatype = (v \ "type").as[String];
-							val value = (v \ "value").as[String];
-							datatype match {
-								case "boolean" => value.toBoolean;
-								case "int" => Integer.parseInt(value);
-								case "date" => new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd").parse(value).getTime);
-								case "datetime" => new java.sql.Timestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(value).getTime);
-								case "string" => value;
-								case _ => throw new IllegalStateException(datatype + ", " + value);
-							}
-						}.toList;
-					case _ => Nil;
-				}
-			case None => Nil;
 		}
 	}
 	

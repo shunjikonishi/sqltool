@@ -32,6 +32,7 @@ POST    /sql/import.sql             controllers.QueryTool.importSql
 
 GET     /sql/test                   controllers.QueryTool.test
 GET     /google/test                controllers.GoogleTool.test
+POST    /google/execute             controllers.GoogleTool.execute
 GET     /google/show/:bookName/:sheetName controllers.GoogleTool.showSheet(bookName, sheetName)
 
 # Map static resources from the /public folder to the /assets URL path

@@ -4,6 +4,7 @@ import play.api.mvc.Controller;
 import play.api.mvc.Action;
 
 import jp.co.flect.play2.utils.Params;
+import models.GoogleSpreadsheetManager;
 
 object Application extends Controller {
 	
@@ -15,6 +16,7 @@ object Application extends Controller {
 		val importInsert = flash.get("Import-Insert").getOrElse("0").toInt;
 		val importUpdate = flash.get("Import-Update").getOrElse("0").toInt;
 		val targetGroup = flash.get("targetGroup").getOrElse("");
-		Ok(views.html.main(importInsert, importUpdate, targetGroup));
+		val scheduleEnabled = GoogleSpreadsheetManager.enabled;
+		Ok(views.html.main(scheduleEnabled, importInsert, importUpdate, targetGroup));
 	}
 }

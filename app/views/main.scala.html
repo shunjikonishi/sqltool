@@ -1,4 +1,4 @@
-@(importInsert: Int, importUpdate: Int, targetGroup: String)(implicit lang: Lang)
+@(scheduleEnabled: Boolean, importInsert: Int, importUpdate: Int, targetGroup: String)(implicit lang: Lang)
 
 @base("SQLTool") {
 <link rel='stylesheet' type='text/css' href='@routes.Assets.at("javascripts/ext/jqgrid/css/ui.jqgrid.css")' />
@@ -17,6 +17,7 @@
 var app;
 $(document).ready(function() {
 	var settings = {
+		"scheduleEnabled" : @scheduleEnabled,
 		"importInsert" : @importInsert,
 		"importUpdate" : @importUpdate,
 		"targetGroup" : "@targetGroup"
@@ -98,6 +99,9 @@ $(document).ready(function() {
 		<div id="graph-pane" class="lower-child" style="display:none">
 			<div id="graph-canvas"></div>
 		</div>
+		<div id="sheet-pane" class="lower-child" style="display:none">
+			<iframe src="about:none" id="sheet-frame" style="height:100%;width:100%;"></iframe>
+		</div>
 		<div id="error-msg" class="lower-child alert alert-error" style="display:none"></div>
 	</div>
 </div>
@@ -109,6 +113,40 @@ $(document).ready(function() {
 			<li><label>@Messages("group")</label><input type="text" id="sql-group"></li>
 			<li><label>@Messages("kind")</label><select id="sql-kind"></select></li>
 			<li><label>@Messages("description")</label><textarea id="sql-desc" class="input-xxlarge" rows="5"></textarea>
+		</ul>
+	</fieldset>
+	<fieldset id="schedule-setting" style="display:none">
+		<legend>@Messages("scheduleSetting")</legend>
+		<ul>
+			<li><label>@Messages("ui.spreadsheet")</label><input type="text" id="schedule-spreadsheet"><label style="padding-left:20px;">@Messages("ui.worksheet")</label><input type="text" id="schedule-worksheet"></li>
+			<li><label>@Messages("ui.scheduleTime")</label>
+				<select id="schedule-time" class="input-small">
+					<option value="00:00:00">00:00</option>
+					<option value="01:00:00">01:00</option>
+					<option value="02:00:00">02:00</option>
+					<option value="03:00:00">03:00</option>
+					<option value="04:00:00">04:00</option>
+					<option value="05:00:00">05:00</option>
+					<option value="06:00:00">06:00</option>
+					<option value="07:00:00">07:00</option>
+					<option value="08:00:00">08:00</option>
+					<option value="09:00:00">09:00</option>
+					<option value="10:00:00">10:00</option>
+					<option value="11:00:00">11:00</option>
+					<option value="12:00:00">12:00</option>
+					<option value="13:00:00">13:00</option>
+					<option value="14:00:00">14:00</option>
+					<option value="15:00:00">15:00</option>
+					<option value="16:00:00">16:00</option>
+					<option value="17:00:00">17:00</option>
+					<option value="18:00:00">18:00</option>
+					<option value="19:00:00">19:00</option>
+					<option value="20:00:00">20:00</option>
+					<option value="21:00:00">21:00</option>
+					<option value="22:00:00">22:00</option>
+					<option value="23:00:00">23:00</option>
+				</select>
+			</li>
 		</ul>
 	</fieldset>
 </div>

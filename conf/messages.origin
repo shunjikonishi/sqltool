@@ -82,6 +82,10 @@ ui.confirmDelete[ja]=クエリーを削除しますか？
 ui.required={0} is required
 ui.required[ja]={0}は必須です
 
+ui.requiredIfSchedule=When kind is Schedule, {0} is required
+ui.requiredIfSchedule[ja]=スケジュールの場合は{0}は必須です
+
+
 ui.importResult=Import: Insert={0}, Update={1}
 ui.importResult[ja]=インポート: 新規={0}, 更新={1}
 
@@ -96,6 +100,9 @@ ui.barGraph[ja]=棒グラフ
 
 ui.lineGraph=Line chart
 ui.lineGraph[ja]=折れ線グラフ
+
+ui.schedule=スケジュール
+ui.schedule[ja]=スケジュール
 
 ui.other=Other
 ui.other[ja]=その他
@@ -144,3 +151,16 @@ horizontal[ja]=横
 
 useIt=Go to main
 useIt[ja]=メイン画面
+
+scheduleSetting=Schedule setting
+scheduleSetting[ja]=スケジュール設定
+
+ui.spreadsheet=Spreadsheet
+ui.spreadsheet[ja]=スプレッドシート
+
+ui.worksheet=Worksheet
+ui.worksheet[ja]=ワークシート
+
+ui.scheduleTime=Execute time
+ui.scheduleTime[ja]=実行時刻
+

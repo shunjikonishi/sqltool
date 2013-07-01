@@ -1,5 +1,6 @@
 package models;
 
+import play.api.libs.json.Json;
 import play.api.libs.json.JsValue;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.JsString;
@@ -14,13 +15,15 @@ object QueryKind {
 	case object PIE_GRAPH extends QueryKind(11, "PieGraph");
 	case object BAR_GRAPH extends QueryKind(12, "BarGraph");
 	case object LINE_GRAPH extends QueryKind(13, "LineGraph");
+	case object SCHEDULE extends QueryKind(21, "Schedule");
 	
 	val values = Array(
 //		GROUP,
 		QUERY,
 		PIE_GRAPH,
 		BAR_GRAPH,
-		LINE_GRAPH
+		LINE_GRAPH,
+		SCHEDULE
 	);
 	
 	def fromCode(code: Int) = values.filter(_.code == code).head;
@@ -52,6 +55,20 @@ case class QueryInfo(
 	def id = optId.getOrElse("");
 	def hasId = !optId.isEmpty;
 	
+	private def getSettingValue(name: String): String = {
+		setting match {
+			case Some(x) =>
+				val json = Json.parse(x);
+				(json \ name) match {
+					case str: JsString => str.value;
+					case any => any.toString;
+				}
+			case None => "";
+		}
+	}
+	def spreadsheet = getSettingValue("spreadsheet");
+	def worksheet = getSettingValue("worksheet");
+	def scheduleTime = getSettingValue("time");
 }
 
 object QueryInfoFormat extends Format[QueryInfo] {

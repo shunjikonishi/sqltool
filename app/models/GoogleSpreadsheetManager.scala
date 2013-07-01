@@ -44,24 +44,17 @@ class GoogleSpreadsheetManager(username: String, password: String) {
 		ss;
 	}
 	
-	def test = {
-		
-		val SPREADSHEET_FEED_URL = new URL(
-			"https://spreadsheets.google.com/feeds/spreadsheets/private/full");
-		
-		// Make a request to the API and get all spreadsheets.
-		val feed = service.getFeed(SPREADSHEET_FEED_URL, classOf[SpreadsheetFeed]);
-		val spreadsheets = feed.getEntries();
-		
-		spreadsheets.map(_.getTitle.getPlainText).mkString("\n");
-	}
-	
 	def getSpreadsheet(title: String): Option[SpreadsheetEntry] = {
 		val urlFactory = FeedURLFactory.getDefault;
 		val spreadsheetQuery = new SpreadsheetQuery(urlFactory.getSpreadsheetsFeedUrl());
 		spreadsheetQuery.setTitleQuery(title);
 		val spreadsheetFeed = service.query(spreadsheetQuery, classOf[SpreadsheetFeed]);
-		spreadsheetFeed.getEntries.filter(_.getTitle.getPlainText == title).headOption;
+		spreadsheetFeed.getEntries.filter { entry =>
+			val name = entry.getTitle.getPlainText;
+			println("test: " + name + ", " + title + ", " + (name == title));
+Thread.dumpStack;
+			name == title;
+		}.headOption;
 	}
 	
 	def getOrCreateSpreadsheet(title: String): SpreadsheetEntry = {
@@ -139,4 +132,5 @@ class GoogleSpreadsheetManager(username: String, password: String) {
 			addRow(sheet, normalizedLabels.zip(values));
 		}
 	}
+	
 }

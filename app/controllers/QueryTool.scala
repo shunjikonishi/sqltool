@@ -33,7 +33,9 @@ import java.io.File;
 
 object QueryTool extends Controller with DatabaseUtility {
 	
-	private val man: QueryManager = new RdbQueryManager(databaseName);
+	def databaseName = "default";
+	
+	val man: QueryManager = new RdbQueryManager(databaseName);
 	
 	implicit val queryKindFormat = new Formatter[QueryKind] {
 		override def bind(key: String, data: Map[String, String]):Either[Seq[FormError], QueryKind] = 
@@ -53,8 +55,6 @@ object QueryTool extends Controller with DatabaseUtility {
 		"desc" -> optional(text),
 		"setting" -> optional(text)
 	)(QueryInfo.apply)(QueryInfo.unapply));
-	
-	def databaseName = "default";
 	
 	def prepareSql = Action { implicit request =>
 		Ok("OK");
@@ -188,7 +188,6 @@ object QueryTool extends Controller with DatabaseUtility {
 			BadRequest;
 		} else {
 			val ret = man.updateGraphSetting(id.get, setting.get);
-println("updateGraphSetting: " + id + ", " + ret + ", " + setting);
 			Ok("OK");
 		}
 	}
