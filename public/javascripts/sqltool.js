@@ -1092,12 +1092,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 								if (sqlForm.getParams().error) {
 									sqlGrid.hide();
 									sqlGraph.hide();
+									sqlSheet.hide();
 								} else {
 									executeSql(data.sql);
 								}
 							} else {
 								sqlGrid.hide();
 								sqlGraph.hide();
+								sqlSheet.hide();
 							}
 							break;
 						default:
@@ -1114,6 +1116,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			enableButtons(true);
 			if (bExec) {
 				if (query.kind == QueryKind.Schedule) {
+					sqlGrid.hide();
+					sqlGraph.hide();
 					sqlSheet.show(query);
 				} else {
 					checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
