@@ -170,3 +170,11 @@ footer .copy-right {
 .hero-unit {
 	border: solid 1px;
 }
+
+#sheet-frame {
+	height:100%;
+	width:100%;
+	padding:0;
+	margin:0;
+	box-sizing: border-box;	-moz-box-sizing: border-box;
+}

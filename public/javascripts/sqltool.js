@@ -830,8 +830,8 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			el.hide();
 			return this;
 		}
-		function show() {
-			el.show();
+		function show(info) {
+			el.attr("src", "/google/show/" + info.setting.spreadsheet + "/" + info.setting.worksheet).show();
 			return this;
 		}
 		function execute(info, sql) {
@@ -842,10 +842,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					"sql" : sql
 				},
 				"success" : function(data) {
-					if (data == "OK") {
-						show();
-						el.find("iframe").attr("src", "/google/show/" + info.setting.spreadsheet + "/" + info.setting.worksheet);
-					} else {
+					if (data != "OK") {
 						error(data);
 					}
 				}
@@ -917,7 +914,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		sqlTree = new SqlTree(this, "#tree-pane");
 		sqlTabs = new SqlTabs(this, "#sql-tab");
 		sqlForm = new SqlForm(this, "#formForm", "#formDesc");
-		sqlSheet = new SqlSheet(this, "#sheet-pane");
+		sqlSheet = new SqlSheet(this, "#sheet-frame");
 		
 		var sqlKind = QueryKind.bindSelect("#sql-kind");
 		removeSqlKindFromSelect(QueryKind.Group);
@@ -1048,13 +1045,14 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			msgPane.hide();
 			sqlGraph.hide();
 			sqlGrid.hide();
-			sqlSheet.hide();
 			if (currentQuery == null || currentQuery.kind == QueryKind.Query) {
+				sqlSheet.hide();
 				var h = $("#lower-pane").height() - 120;
 				sqlGrid.show().height(h).execute(sql, params.params);
 			} else if (currentQuery.kind == QueryKind.Schedule) {
 				sqlSheet.execute(currentQuery, sql);
 			} else {
+				sqlSheet.hide();
 				var graphSetting = currentQuery.setting;
 				if (!graphSetting) {
 					graphSetting = currentQuery.kind.defaults;
@@ -1111,7 +1109,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			sqlForm.setDescription(query.desc);
 			enableButtons(true);
 			if (bExec) {
-				checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+				if (query.kind == QueryKind.Schedule) {
+					sqlSheet.show(query);
+				} else {
+					checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+				}
 			}
 		}
 		function setTableInfo(table, columns) {
