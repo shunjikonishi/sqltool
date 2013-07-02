@@ -25,12 +25,15 @@ object GoogleSpreadsheetManager {
 	val APPLICATION_NAME = "flect.co.jp-SQLTool-1.0";
 	val SPREADSHEET_CATEGORY = "http://schemas.google.com/docs/2007#spreadsheet";
 	
+	val databaseName = "target";
+	
 	private val USERNAME = sys.env.get("GOOGLE_USERNAME");
 	private val PASSWORD = sys.env.get("GOOGLE_PASSWORD");
 	
 	def apply() = new GoogleSpreadsheetManager(USERNAME.get, PASSWORD.get);
 	
 	def enabled = USERNAME.nonEmpty && PASSWORD.nonEmpty;
+	
 }
 
 

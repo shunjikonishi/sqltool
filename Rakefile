@@ -1,5 +1,5 @@
-task :default => "test"
+task :default => "schedule"
 
-task "test" do
-	sh "java -classpath target/scala-2.10/classes utils.Setup"
+task "schedule" do
+	sh "target/start -Dsqltool.mode=schedule"
 end

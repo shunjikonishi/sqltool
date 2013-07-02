@@ -15,6 +15,8 @@ trait QueryManager {
 	def getGroupList(parent: String): List[String];
 	def getQueryList(parent: String): List[QueryInfo];
 	
+	def getScheduledQueryList(time: String): List[QueryInfo];
+	
 	def save(info:QueryInfo): QueryInfo;
 	def getQueryInfo(id: String): Option[QueryInfo];
 	def getQueryInfo(kind: QueryKind, group: String, name: String): Option[QueryInfo];
@@ -226,6 +228,15 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 		SQL(SELECT_STATEMENT + "WHERE groupname = {groupname} ORDER BY name").on(
 				"groupname" -> parent
 			).apply().map(rowToInfo(_)).toList;
+	}
+	
+	def getScheduledQueryList(time: String): List[QueryInfo] = withConnection { implicit con =>
+		SQL(SELECT_STATEMENT + "WHERE kind = {kind}").on(
+				"kind" -> QueryKind.SCHEDULE.code
+			).apply()
+			.map(rowToInfo(_))
+			.filter(_.scheduleTime == time)
+			.toList;
 	}
 	
 	def getQueryInfo(id: String): Option[QueryInfo] = withConnection { implicit con =>

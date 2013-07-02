@@ -461,7 +461,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 			$("#sql-name").val(name);
 			$("#sql-group").val(group);
-			$("#sql-kind").val(kind);
+			$("#sql-kind").val(kind).change();
 			$("#sql-desc").val(desc);
 			$("#schedule-spreadsheet").val(spreadsheet);
 			$("#schedule-worksheet").val(worksheet);
@@ -758,7 +758,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 							input = $("<input type='text'></input>");
 							break;
 						default:
-							throw new Exception("Invalid datatype: " + name + ": " + type);
+							throw "Invalid datatype: " + name + ": " + type;
 					}
 					input.attr({
 						"name" : name,
@@ -1073,7 +1073,12 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					"sql" : sql
 				},
 				"success" : function(data) {
-					sqlForm.makeForm(data.params);
+					try {
+						sqlForm.makeForm(data.params);
+					} catch (e) {
+						error(e);
+						return;
+					}
 					if (data.params.length == 0) {
 						sqlTabs.activateSql();
 					} else {
