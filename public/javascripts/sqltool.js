@@ -113,6 +113,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		function message(text) {
 			sqlGraph.hide();
 			sqlGrid.hide();
+			sqlSheet.hide();
 			el.html(text).show();
 		}
 		function hide() {
@@ -842,7 +843,10 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					"sql" : sql
 				},
 				"success" : function(data) {
-					if (data != "OK") {
+					if (data == "OK") {
+						el.show();
+					} else {
+						el.hide();
 						error(data);
 					}
 				}

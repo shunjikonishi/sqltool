@@ -63,12 +63,18 @@ object GoogleTool extends Controller with DatabaseUtility {
 			BadRequest;
 		} else {
 			val (id, sql) = data.get;
-			QueryTool.man.getQueryInfo(id) match {
-				case Some(info) =>
-					doExecute(info.spreadsheet, info.worksheet, sql);
-					Ok("OK");
-				case None =>
-					NotFound(id);
+			try {
+				QueryTool.man.getQueryInfo(id) match {
+					case Some(info) =>
+						doExecute(info.spreadsheet, info.worksheet, sql);
+						Ok("OK");
+					case None =>
+						NotFound(id);
+				}
+			} catch {
+				case e: Exception =>
+					e.printStackTrace;
+					Ok(e.toString);
 			}
 		}
 	}
