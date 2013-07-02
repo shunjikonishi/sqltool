@@ -28,13 +28,112 @@ object GoogleTool extends Controller with DatabaseUtility {
 	}
 	
 	def test = filterAction { implicit request =>
-		val labels = List("hoge", "FUGA", "はは　は", "ひひ ひひ");
-		val sheet = man.getOrCreateSpreadsheet("SqlToolTest");
-		val worksheet = man.getOrCreateWorksheet(sheet, "fugafuga", labels);
-		man.addRow(worksheet, labels.map { s =>
-				s.toLowerCase.replaceAll("[ 　]", "");
-			}.zip(List("1", "2", "3", "4")));
-		Ok(worksheet.getTitle.getPlainText);
+		val list = List(
+			"od6",
+			"od7",
+			"od4",
+			"od5",
+			"oda",
+			"odb",
+			"od8",
+			"od9",
+			"ocy",
+			"ocz",
+			"ocw",
+			"ocx",
+			"od2",
+			"od3",
+			"od0",
+			"od1",
+			"ocq",
+			"ocr",
+			"oco",
+			"ocp",
+			"ocu",
+			"ocv",
+			"ocs",
+			"oct",
+			"oci",
+			"ocj",
+			"ocg",
+			"och",
+			"ocm",
+			"ocn",
+			"ock",
+			"ocl",
+			"oe2",
+			"oe3",
+			"oe0",
+			"oe1",
+			"oe6",
+			"oe7",
+			"oe4",
+			"oe5",
+			"odu",
+			"odv",
+			"ods",
+			"odt",
+			"ody",
+			"odz",
+			"odw",
+			"odx",
+			"odm",
+			"odn",
+			"odk",
+			"odl",
+			"odq",
+			"odr",
+			"odo",
+			"odp",
+			"ode",
+			"odf",
+			"odc",
+			"odd",
+			"odi",
+			"odj",
+			"odg",
+			"odh",
+			"obe",
+			"obf",
+			"obc",
+			"obd",
+			"obi",
+			"obj",
+			"obg",
+			"obh",
+			"ob6",
+			"ob7",
+			"ob4",
+			"ob5",
+			"oba",
+			"obb",
+			"ob8",
+			"ob9",
+			"oay",
+			"oaz",
+			"oaw",
+			"oax",
+			"ob2",
+			"ob3",
+			"ob0",
+			"ob1",
+			"oaq",
+			"oar",
+			"oao",
+			"oap",
+			"oau",
+			"oav",
+			"oas",
+			"oat",
+			"oca",
+			"ocb",
+			"oc8",
+			"oc9"
+		);
+		Ok(list.map { id =>
+			val ret = convertGid("hoge/" + id);
+			id + ": " + ret;
+		}.mkString("\n"));
 	}
 	
 	def showSheet(bookName: String, sheetName: String) = filterAction { implicit request =>
@@ -42,7 +141,8 @@ object GoogleTool extends Controller with DatabaseUtility {
 			case Some(book) =>
 				man.getWorksheet(book, sheetName) match {
 					case Some(sheet) =>
-						val url = book.getSpreadsheetLink.getHref;
+						val gid = convertGid(sheet.getId);
+						val url = book.getSpreadsheetLink.getHref + "&rm=minimal#gid=" + gid;
 						Redirect(url);
 					case None =>
 						Ok("Worksheet not found: " + bookName + "." + sheetName);
@@ -50,6 +150,11 @@ object GoogleTool extends Controller with DatabaseUtility {
 			case None =>
 				Ok("Spreadsheet not found: " + bookName);
 		}
+	}
+	
+	private def convertGid(id: String) = {
+		val suffix = id.substring(id.lastIndexOf('/') + 1);
+		Integer.parseInt(suffix, 36) ^ 31578;
 	}
 	
 	private val executeForm = Form(tuple(
@@ -86,4 +191,5 @@ object GoogleTool extends Controller with DatabaseUtility {
 			}
 		}
 	}
+	
 }

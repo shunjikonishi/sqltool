@@ -51,8 +51,6 @@ class GoogleSpreadsheetManager(username: String, password: String) {
 		val spreadsheetFeed = service.query(spreadsheetQuery, classOf[SpreadsheetFeed]);
 		spreadsheetFeed.getEntries.filter { entry =>
 			val name = entry.getTitle.getPlainText;
-			println("test: " + name + ", " + title + ", " + (name == title));
-Thread.dumpStack;
 			name == title;
 		}.headOption;
 	}
