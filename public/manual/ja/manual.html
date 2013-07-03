@@ -21,14 +21,14 @@
 <section>
 	<h1>SQLToolとは</h1>
 	<p>
-		任意のデータベースに対するクエリを登録しておき、それをWebブラウザ上で実行できるツールです。
+		任意のデータベースに対するクエリーを登録しておき、それをWebブラウザ上で実行できるツールです。
 	</p>
 	<p>
 		Herokuの場合同種のツールとしてDataClipがありますが、本アプリケーションには以下の優位点があります。
 	</p>
 	<ul>
 		<li>SELECT文の中にプレースホルダを埋め込むことでパラメータが使用できます。</li>
-		<li>登録したSELECT文を階層構造で整理できます。</li>
+		<li>登録したクエリーを階層構造で整理できます。</li>
 		<li>SELECT結果をダイレクトにグラフ表示できます。</li>
 		<li>指定した時間にSELECT結果のスナップショットをGoogle Spreadsheetに転記することができます。</li>
 	</ul>
@@ -59,7 +59,7 @@ heroku create
 git push heroku master
 heroku run rake setup</pre></code>
 		<p>rake setupではheroku create時に標準で付加されるDev Databaseに対してconf/create.sqlを実行しています。</p>
-		<p>ここに保存されるのは本アプリケーションで登録されるSELECT文のみです。</p>
+		<p>ここに保存されるのは本アプリケーションで登録されるクエリーのみです。</p>
 		<p>
 			多くても数百行程度と思われるので特にProductionデータベースを使用する必要はありません。
 			(バックアップにはエクスポート機能を使用できます。)
@@ -73,7 +73,7 @@ heroku run rake setup</pre></code>
 		</p>
 		<code><pre>heroku config:set TARGET_DATABASE=&lt;your database url></pre></code>
 		<p>
-			TARGE_DATABASEにはあなたがSELECT文を発行したい既存のDATABASE_URLを設定してください。
+			TARGE_DATABASEにはあなたがクエリーを発行したい既存のDATABASE_URLを設定してください。
 		</p>
 		<div class="memo">
 			本アプリケーションがTARGET_DATABASEに対して発行するSQLはSELECT文のみであり、更新文が実行されることはありません。
@@ -177,8 +177,32 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 	</ul>
 	<section>
 		<h1>Treeペイン</h1>
-		- クエリー
-		- スキーマ
+		<p>
+			トップレベルにはクエリーとスキーマの二つのフォルダが表示されます。
+		</p>
+		<h4>クエリー</h4>
+		<p>
+			クエリー以下にはあなたの登録したクエリーが階層表示されます。
+		</p>
+		<p>
+			クエリーを選択した場合、選択したクエリーにパラメータが無い場合はSELECT文が即時実行され、
+			結果がResultペインに表示されます。
+		</p>
+		<p>
+			選択したクエリーがスナップショットの場合はスナップショットの転記先のGoogle Spreadsheetが表示されます。
+		</p>
+		<h4>スキーマ</h4>
+		<p>
+			スキーマ以下にはデータベース中にあるテーブルとビューの一覧が表示されます。
+		</p>
+		<p>
+			テーブルまたはビューを選択した場合、そのテーブル(ビュー)に対する全件検索が即時実行され、
+			結果がResultペインに表示されます。
+		</p>
+		<p>
+			実行されるSELECT文はSQLペインに表示されるのでクエリー登録時にはここから編集を開始すると
+			多数のカラムをSELECT句に自分で記述必要が無くなり若干便利かもしれません。
+		</p>
 	</section>
 	<section>
 		<h1>SQLペイン</h1>
