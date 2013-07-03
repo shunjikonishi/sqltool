@@ -101,9 +101,13 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"setting" : s
 			};
 		}
+		function fullname() {
+			return this.group ? this.group + "/" + this.name : this.name;
+		}
 		function isParsed() { return this.parsedSql != null;}
 		
 		$.extend(this, {
+			"fullname" : fullname,
 			"getHash" : getHash,
 			"isParsed" : isParsed
 		});
@@ -735,6 +739,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				for (var i=0; i<params.length; i++) {
 					var name = params[i].name,
 						type = params[i].type;
+					if (!name) {
+						throw "Invalid param: [" + name + ":" + type + "]";
+					}
 					var li = $("<li></li>"),
 						input = null;
 					li.append("<label>" + name + "</label>");
@@ -946,6 +953,9 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		
 		var currentQuery = null,
 			btnExec = $("#btnExec").click(execute),
+			btnNew = $("#btnNew").click(function() {
+				setQueryInfo(null);
+			}),
 			btnSave = $("#btnSave").click(function() {
 				var sql = checkSql();
 				if (sql) {
@@ -1014,8 +1024,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 				"success" : function(data, textStatus){
 					if (data == "OK") {
 						sqlTree.removeNode(queryInfo);
-						currentQuery = null;
-						enableButtons(false);
+						setQueryInfo(null);
 					} else {
 						alert(data);
 					}
@@ -1024,7 +1033,11 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function execute() {
 			if (sqlForm.isBuilded() && (currentQuery == null || (currentQuery && currentQuery.isParsed()))) {
-				executeSql(currentQuery.parsedSql);
+				if (currentQuery) {
+					executeSql(currentQuery.parsedSql);
+				} else {
+					executeSql(checkSql());
+				}
 			} else {
 				var sql = checkSql();
 				if (sql) {
@@ -1116,29 +1129,37 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		}
 		function setQueryInfo(query, bExec) {
 			currentQuery = query;
-			$("#txtSQL").val(query.sql);
-			sqlForm.setDescription(query.desc);
-			enableButtons(true);
-			if (bExec) {
-				if (query.kind == QueryKind.Schedule) {
-					sqlGrid.hide();
-					sqlGraph.hide();
-					sqlSheet.show(query);
-				} else {
-					checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+			if (query) {
+				$("#txtSQL").val(query.sql);
+				$("#lblQuery").text(query.fullname());
+				sqlForm.setDescription(query.desc);
+				enableButtons(true);
+				if (bExec) {
+					if (query.kind == QueryKind.Schedule) {
+						sqlGrid.hide();
+						sqlGraph.hide();
+						sqlSheet.show(query);
+					} else {
+						checkSqlParams(query.sql, EXECUTE_NO_PARAMS);
+					}
 				}
+			} else {
+				$("#txtSQL").val("");
+				enableButtons(false);
+				sqlForm.setDescription(null);
+				sqlForm.makeForm(null);
+				$("#lblQuery").empty();
+				sqlTabs.activateSql();
 			}
 		}
 		function setTableInfo(table, columns) {
-			currentQuery = null;
+			setQueryInfo(null);
 			var sql = "SELECT A." + columns[0].name;
 			for (var i=1; i<columns.length; i++) {
 				sql += ",\n       A." + columns[i].name;
 			}
 			sql += "\n  FROM " + table + " A";
 			$("#txtSQL").val(sql);
-			enableButtons(false);
-			sqlForm.makeForm(null);
 			executeSql(sql);
 		}
 		function enableButtons(b) {
@@ -1156,14 +1177,15 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 			}
 		}
 		function updateTree(queryInfo) {
-			currentQuery = queryInfo;
 			if (currentQuery && currentQuery.id == queryInfo.id) {
 				if (currentQuery.name == queryInfo.name && currentQuery.group == queryInfo.group) {
+					currentQuery = queryInfo;
 					return;
 				}
 				sqlTree.removeNode(currentQuery);
 			}
 			sqlTree.addNode(queryInfo);
+			currentQuery = queryInfo;
 		}
 		function exportSql() {
 			window.open("/sql/export.sql");

@@ -19,8 +19,7 @@ object Global extends WithFilters(SessionIdFilter, AccessControlFilter) {
 		}
 		sys.props.get("sqltool.mode").getOrElse("web") match {
 			case "schedule" =>
-				println("Run schedule");
-				Schedule.main(Array());
+				Schedule.main();
 				System.exit(0);
 			case _ =>
 		}

@@ -184,7 +184,7 @@ object GoogleTool extends Controller with DatabaseUtility {
 		}
 	}
 	
-	private def doExecute(bookName: String, sheetName: String, sql: String): Unit = withConnection { con =>
+	def doExecute(bookName: String, sheetName: String, sql: String): Unit = withConnection { con =>
 		using(con.prepareStatement(sql)) { stmt =>
 			using(stmt.executeQuery) { rs =>
 				man.addResultSet(bookName, sheetName, rs);

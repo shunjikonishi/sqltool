@@ -21,6 +21,7 @@ labelCount=Number of labels
 language=Language
 lineGraphSetting=Line graph setting
 name=Name
+new=New
 parameters=Parameters
 pieGraphSetting=Pie graph setting
 save=Save

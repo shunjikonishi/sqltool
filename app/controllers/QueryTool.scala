@@ -27,6 +27,7 @@ import models.QueryParam;
 import models.ParsedQuery;
 import models.QueryManager;
 import models.RdbQueryManager;
+import models.GoogleSpreadsheetManager;
 import models.SqlToolImplicits._;
 
 import java.io.File;
@@ -68,6 +69,13 @@ object QueryTool extends Controller with DatabaseUtility {
 			val info = data.get;
 			println(info);
 			val newInfo = man.save(info);
+			if (info.optId.isEmpty && newInfo.kind == QueryKind.SCHEDULE) {
+				val gm = GoogleSpreadsheetManager();
+				val spreadsheet = gm.getOrCreateSpreadsheet(newInfo.spreadsheet);
+				if (gm.getWorksheet(spreadsheet, newInfo.worksheet).isEmpty) {
+					GoogleTool.doExecute(newInfo.spreadsheet, newInfo.worksheet, newInfo.sql);
+				}
+			}
 			Ok(JsObject(List(
 				"id" -> JsString(newInfo.id),
 				"status" -> JsString("OK")

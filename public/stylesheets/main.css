@@ -178,3 +178,9 @@ footer .copy-right {
 	margin:0;
 	box-sizing: border-box;	-moz-box-sizing: border-box;
 }
+
+#lblQuery {
+	float: right;
+	margin: 8px;
+	padding: 6px;
+}

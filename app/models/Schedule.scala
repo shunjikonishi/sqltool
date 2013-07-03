@@ -1,5 +1,7 @@
 package models;
 
+import play.api.Logger;
+
 import jp.co.flect.play2.utils.DatabaseUtility;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -14,7 +16,7 @@ object Schedule extends DatabaseUtility {
 	val gm = GoogleSpreadsheetManager();
 	val qm = new RdbQueryManager("default");
 	
-	def main(args: Array[String]): Unit = {
+	def main(args: Array[String] = Array()): Unit = {
 		
 		val decimal = new DecimalFormat("00");
 		val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -30,9 +32,8 @@ object Schedule extends DatabaseUtility {
 		times.filter { time =>
 			math.abs(now.getTime - time.num) < 10 * 60 * 1000;
 		}.foreach { time =>
-println("time: " + time);
 			val queries = qm.getScheduledQueryList(time.str);
-println("queries: " + queries);
+			Logger.info("Run schedule: " + time.str + ", count=" + queries.size);
 			queries.foreach(execute(_));
 		}
 	}
