@@ -1,5 +1,11 @@
 task :default => "schedule"
 
 task "schedule" do
-	sh "target/start -Dsqltool.mode=schedule -Duser.timezone=" + ENV['TIMEZONE']
+	opt = ''
+	timezone = ENV['TIMEZONE']
+	if (timezone != nil)
+		opt = "-Duser.timezone=" + timezone
+	end
+	sh "target/start -Dsqltool.mode=schedule " + opt
 end
+
