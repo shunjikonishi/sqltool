@@ -85,8 +85,8 @@ ui.confirmDelete[ja]=クエリーを削除しますか？
 ui.required={0} is required
 ui.required[ja]={0}は必須です
 
-ui.requiredIfSchedule=When kind is Schedule, {0} is required
-ui.requiredIfSchedule[ja]=スケジュールの場合は{0}は必須です
+ui.requiredIfSchedule=When kind is Snapshot, {0} is required
+ui.requiredIfSchedule[ja]=スナップショットの場合は{0}は必須です
 
 
 ui.importResult=Import: Insert={0}, Update={1}
@@ -106,6 +106,9 @@ ui.lineGraph[ja]=折れ線グラフ
 
 ui.schedule=スケジュール
 ui.schedule[ja]=スケジュール
+
+ui.snapshot=Snapshot
+ui.snapshot[ja]=スナップショット
 
 ui.other=Other
 ui.other[ja]=その他

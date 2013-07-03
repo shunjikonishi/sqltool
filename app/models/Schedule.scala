@@ -9,6 +9,8 @@ import java.util.Date;
 
 object Schedule extends DatabaseUtility {
 	
+	val logger = Logger("Schedule");
+	
 	def databaseName = "target";
 	
 	case class Time(str: String, num: Long)
@@ -33,7 +35,7 @@ object Schedule extends DatabaseUtility {
 			math.abs(now.getTime - time.num) < 10 * 60 * 1000;
 		}.foreach { time =>
 			val queries = qm.getScheduledQueryList(time.str);
-			Logger.info("Run schedule: " + time.str + ", count=" + queries.size);
+			logger.info("Run schedule: " + time.str + ", count=" + queries.size);
 			queries.foreach(execute(_));
 		}
 	}

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SQLToolについて</title>
+<link rel="stylesheet" media="screen" href="../../stylesheets/manual.css">
+<!--[if lt IE 9.0]>
+<link rel="stylesheet" media="screen" href="stylesheets/manual.oldie.css">
+<![endif]-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="../../javascripts/jquery.splitter.js"></script>
+<script src="../../javascripts/manual.js"></script>
+</head>
+<body>
+<header>
+	<h1>SQLToolについて</h1>
+	<a href="/main">メイン</a>
+	<div style="clear:both"></div>
+</header>
+<nav></nav>
+<section>
+	<h1>SQLToolとは</h1>
+	<p>
+		任意のデータベースに対するクエリを登録しておき、それをWebブラウザ上で実行できるツールです。
+	</p>
+	<p>
+		Herokuの場合同種のツールとしてDataClipがありますが、本アプリケーションには以下の優位点があります。
+	</p>
+	<ul>
+		<li>SELECT文の中にプレースホルダを埋め込むことでパラメータが使用できます。</li>
+		<li>登録したSELECT文を階層構造で整理できます。</li>
+		<li>SELECT結果をダイレクトにグラフ表示できます。</li>
+		<li>指定した時間にSELECT結果のスナップショットをGoogle Spreadsheetに転記することができます。</li>
+	</ul>
+	<div class="memo">
+		簡便化のため以下の説明はHeroku上でHeroku Postgresを対象に動作させることを想定して
+		記述されていますが環境さえ整えればHeroku以外でも動作させることは可能です。
+	</div>
+</section>
+<section>
+	<h1>インストール</h1>
+	<p>
+		以下にHeroku上で本アプリケーションを動作させるための手順を記載します。
+	</p>
+	<section>
+		<h1>前提条件</h1>
+		<ul>
+			<li>Heroku Toolbeltがセットアップされていること</li>
+		</ul>
+	</section>
+	<section>
+		<h1>Herokuアプリケーションの作成</h1>
+		<p>
+			以下のコマンドでHeroku上に本アプリケーションを構築できます。
+		</p>
+		<code><pre
+>git clone git@github.com:shunjikonishi/sqltool.git
+heroku create
+git push heroku master
+heroku run rake setup</pre></code>
+		<p>rake setupではheroku create時に標準で付加されるDev Databaseに対してconf/create.sqlを実行しています。</p>
+		<p>ここに保存されるのは本アプリケーションで登録されるSELECT文のみです。</p>
+		<p>
+			多くても数百行程度と思われるので特にProductionデータベースを使用する必要はありません。
+			(バックアップにはエクスポート機能を使用できます。)
+		</p>
+	</section>
+	<section>
+		<h1>環境変数の設定</h1>
+		<h4>対象データベース</h4>
+		<p>
+			本アプリケーションを動作させるためには最低限以下の環境変数の設定が必要です。
+		</p>
+		<code><pre>heroku config:set TARGET_DATABASE=&lt;your database url></pre></code>
+		<p>
+			TARGE_DATABASEにはあなたがSELECT文を発行したい既存のDATABASE_URLを設定してください。
+		</p>
+		<div class="memo">
+			本アプリケーションがTARGET_DATABASEに対して発行するSQLはSELECT文のみであり、更新文が実行されることはありません。
+		</div>
+		<h4>セキュリティ設定</h4>
+		<p>
+			本アプリケーションにアクセス制限を設けたい場合は以下の環境変数を設定してください。
+		</p>
+		<code><pre
+>heroku config:set ALLOWED_IP=xxx.xxx.xxx.xxx,yyy.yyy.yyy.0/255,zzz.zzz.zzz.zzz
+heroku config:set BASIC_AUTHENTICATION=username:password</pre></code>
+		<p>
+			ALLOWED_IPにはアクセスを許可するクライアントのIPアドレスを設定します。
+			カンマ区切りで複数指定でき、サブネット表記も使用可能です。
+		</p>
+		<p>
+			BASIC_AUTHENTICATIONにはベーシック認証で使用するユーザー名とパスワードを設定します。
+		</p>
+		<div class="memo">
+			<p><em>注意！！！</em></p>
+			<p>
+				Herokuアプリケーションはインターネット上に公開されているのでセキュリティ設定を行わないとあなたのデータベースに、
+				URLを知っている人であれば誰でもアクセス可能となってしまいます。
+			</p>
+			<p>
+				本アプリケーションを使用する場合は常にセキュリティ設定を行うことを強く推奨します。
+			</p>
+		</div>
+		<h4>スナップショット設定</h4>
+		<p>
+			<i>スナップショット機能を使用しない場合は以下の設定は不要です。</i>
+		</p>
+		<p>
+			本アプリケーションのスナップショット機能を使用する場合は、Google Spreadsheetと連携するために
+			連携するGoogleアカウントの情報を設定する必要があります。
+		</p>
+		<code><pre
+>heroku config:set GOOGLE_USERNAME=xxxx@gmail.com
+heroku config:set GOOGLE_PASSWORD=yyyyyy
+heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
+		<p>
+			TIMEZONEはスケジュール設定する時刻のタイムゾーンです。日本で使用する場合は「Asia/Tokyo」としてください。
+		</p>
+		<p>
+			環境設定にGoogleアカウントの設定が無い場合はSELECT文登録時の種別に「スナップショット」が表示されません。
+		</p>
+	</section>
+	<section>
+		<h1>スケジューラの設定</h1>
+		<p>
+			<i>スナップショット機能を使用しない場合は以下の設定は不要です。</i>
+		</p>
+		<p>
+			スナップショット機能では定期的にRDBからのスナップショットの取得とGoogle Spreadsheetへの転記を行いますが、
+			本アプリケーション自身はスケジューラ機能を持っていません。
+		</p>
+		<p>
+			このため定期的なスナップショットの実行にはHerokuのアドオンスケジューラを使用します。
+		</p>
+		<code><pre>heroku addons:add scheduler:standard</pre></code>
+		<p>
+			上記コマンドでHeroku Schedulerを追加したらHerokuのWebコンソール画面で以下の設定を行ってください。
+		</p>
+		<table border="1">
+			<tr>
+				<th>TASK</th>
+				<th>FREQUENCY</th>
+				<th>NEXT RUN</th>
+			</tr>
+			<tr>
+				<td>rake</td>
+				<td>Hourly</td>
+				<td>:00</td>
+			</tr>
+		</table>
+		<div class="memo">
+			<p>
+				内部的にはジョブ起動時にその時刻にスケジュールされたクエリーがあればそれを実行します。
+			</p>
+			<p>
+				スナップショットの取得時間が1日に1回のみの場合はDailyの設定でも構いませんが、実行時刻は必ず00分に設定してください。
+			</p>
+		</div>
+	</section>
+</section>
+<section>
+	<h1>画面構成</h1>
+	<p>
+		メイン画面は以下の3ペインから構成されます。
+	</p>
+	<ul>
+		<li>Treeペイン<br>
+			登録したクエリーとテーブルがツリー形式で表示される領域です。。
+		</li>
+		<li>SQLペイン<br>
+			クエリーの登録／編集を行う領域です。
+		</li>
+		<li>Resultペイン<br>
+			クエリーの実行結果が表示される領域です。
+		</li>
+	</ul>
+	<section>
+		<h1>Treeペイン</h1>
+		- クエリー
+		- スキーマ
+	</section>
+	<section>
+		<h1>SQLペイン</h1>
+		- SQL入力
+		- 実行
+		- 新規
+		- 保存
+		- 名前を付けて保存
+		- 編集
+		- 削除
+		- グラフ設定
+	</section>
+	<section>
+		<h1>Resultペイン</h1>
+		- クエリーの表示
+		- グラフの表示
+		- スナップショットの表示
+	</section>
+	<section>
+		<h1>メニュー</h1>
+		- ファイル
+		- エクスポート
+		- インポート
+		- 使い方
+	</section>
+</section>
+<section>
+	<h1>SQLの保存</h1>
+</section>
+<section>
+	<h1>SQLの種別</h1>
+	<section>
+		<h1>クエリー</h1>
+		SELECT結果のダウンロード
+	</section>
+	<section>
+		<h1>グラフ</h1>
+		- SQLの書き方
+	</section>
+	<section>
+		<h1>スナップショット</h1>
+		- SQLの書き方
+	</section>
+</section>
+<section id="object">
+	<h1>パラメータの指定</h1>
+</section>
+<section>
+	<h1>インポートとエクスポート</h1>
+</section>
+<footer>
+<div class="copy-right">
+	COPYRIGHT（C）FLECT CO.,LTD. ALL RIGHTS RESERVED
+</div>
+	<div style="clear:both"></div>
+</footer>
+</body>
+</html>

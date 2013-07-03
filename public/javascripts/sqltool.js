@@ -898,7 +898,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 					}
 				}
 			},
-			{ "code" : 21, "name" : "Schedule", "text" : MSG.schedule, "icon" : "schedule.png"}
+			{ "code" : 21, "name" : "Schedule", "text" : MSG.snapshot, "icon" : "schedule.png"}
 		], {
 			"isGraph" : function() { 
 				return !!this.graphType;
