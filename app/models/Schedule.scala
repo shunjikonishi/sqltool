@@ -33,6 +33,7 @@ object Schedule extends DatabaseUtility {
 println("time: " + time);
 			val queries = qm.getScheduledQueryList(time.str);
 println("queries: " + queries);
+			queries.foreach(execute(_));
 		}
 	}
 	
