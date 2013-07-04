@@ -8,6 +8,7 @@ import play.api.mvc.Action;
 import play.api.mvc.Request;
 import play.api.mvc.AnyContent;
 import play.api.cache.Cache;
+import play.api.Logger;
 
 import jp.co.flect.javascript.jqgrid.ColModel;
 import jp.co.flect.javascript.jqgrid.RdbColModelFactory;
@@ -91,13 +92,19 @@ class SelectTool(val databaseName: String) extends Controller with DatabaseUtili
 	private def getSQLandModel(implicit request: Request[AnyContent]) = {
 		Params(request).get("sql") match {
 			case Some(sql) =>
-				val model = Cache.getOrElse[ColModel](sql, CACHE_DURATION) {
-					withConnection { con =>
-						val factory = new RdbColModelFactory(con);
-						factory.getQueryModel(sql);
+				try {
+					val model = Cache.getOrElse[ColModel](sql, CACHE_DURATION) {
+						withConnection { con =>
+							val factory = new RdbColModelFactory(con);
+							factory.getQueryModel(sql);
+						}
 					}
+					(sql, model);
+				} catch {
+					case e: Exception =>
+						Logger.error("getSQLandModel: " + sql);
+						throw e;
 				}
-				(sql, model);
 			case None => throw new SQLException("SQL not specified");
 		}
 	}
