@@ -166,11 +166,11 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 		</p>
 		<ul>
 			<li>Playframework 2.1.1</li>
-			<li>クエリーを保存するためのデータベース</li>
+			<li>クエリーを保存するためのRDBMS</li>
 			<li>cronまたはそれに類するスケジューラ</li>
 		</ul>
 		<p>
-			Herokuではrakeも使用していますが、これはなくても構いません。
+			Herokuではrakeも使用していますが、これはなくても問題ありません。
 		</p>
 		<p>
 			がんばってください。
@@ -184,7 +184,7 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 	</p>
 	<ul>
 		<li>Treeペイン<br>
-			登録したクエリーとテーブルがツリー形式で表示される領域です。。
+			登録したクエリーとテーブルがツリー形式で表示される領域です。
 		</li>
 		<li>SQLペイン<br>
 			クエリーの登録／編集を行う領域です。
@@ -219,7 +219,7 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 			結果がResultペインに表示されます。
 		</p>
 		<p>
-			実行されるSELECT文はSQLペインに表示されるのでクエリー登録時にはここから編集を開始すると
+			この時に実行されるSELECT文はSQLペインに表示されるのでクエリー登録時にはここから編集を開始すると
 			多数のカラムをSELECT句に自分で記述必要が無くなり若干便利かもしれません。
 		</p>
 	</section>
@@ -244,13 +244,7 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 			<tr>
 				<th>実行</th>
 				<td>
-					SQLタブに入力されたクエリーを実行し、結果をResultペインに表示します。<br>
-					種別によって結果は以下のように表示されます。
-					<ul>
-						<li>クエリー - SELECT結果をテーブル形式で表示します。</li>
-						<li>グラフ - SELECT結果をグラフで表示します。</li>
-						<li>スナップショット - SELECT結果をGoogleSpreadsheetに追加します。</li>
-					</ul>
+					SQLタブに入力されたクエリーを実行し、結果をResultペインに表示します。
 				</td>
 			</tr>
 			<tr>
@@ -328,58 +322,61 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 	<p>
 		クエリーの保存時には以下の項目を設定します。
 	</p>
-		<table border="1">
-			<tr>
-				<th>名前</th>
-				<td>クエリーの名前を指定します。</td>
-			</tr>
-			<tr>
-				<th>グループ</th>
-				<td>
-					クエリーを分類するためのフォルダ名を指定します。<br>
-					「/」で区切ることで階層化できます。
-				</td>
-			</tr>
-			<tr>
-				<th>種別</th>
-				<td>
-					クエリーの種別を指定します。
-					<ul>
-						<li>クエリー</li>
-						<li>円グラフ</li>
-						<li>棒グラフ</li>
-						<li>折れ線グラフ</li>
-						<li>スナップショット</li>
-					</ul>
-				</td>
-			</tr>
-			<tr>
-				<th>説明</th>
-				<td>
-					クエリーの説明を指定します。
-				</td>
-			</tr>
-		</table>
-		<p>
-			種別がスナップショットの場合はさらに以下の項目を設定します。
-		</p>
-		<table border="1">
-			<tr>
-				<th>スプレッドシート</th>
-				<td>転記するGoogle Spreadsheetを指定します。</td>
-			</tr>
-			<tr>
-				<th>ワークシート</th>
-				<td>転記するGoogle Spreadsheet内のワークシートを指定します。</td>
-			</tr>
-			<tr>
-				<th>実行時刻</th>
-				<td>スナップショット取得の実行時刻を指定します。</td>
-			</tr>
-		</table>
-		<p>
-			指定したスプレッドシートまたはワークシートが存在しない場合は自動的に作成されます。
-		</p>
+	<table border="1">
+		<tr>
+			<th>名前</th>
+			<td>クエリーの名前を指定します。</td>
+		</tr>
+		<tr>
+			<th>グループ</th>
+			<td>
+				クエリーを分類するためのフォルダ名を指定します。<br>
+				「/」で区切ることで階層化できます。
+			</td>
+		</tr>
+		<tr>
+			<th>種別</th>
+			<td>
+				クエリーの種別を指定します。
+				<ul>
+					<li>クエリー</li>
+					<li>円グラフ</li>
+					<li>棒グラフ</li>
+					<li>折れ線グラフ</li>
+					<li>スナップショット</li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<th>説明</th>
+			<td>
+				クエリーの説明を指定します。
+			</td>
+		</tr>
+	</table>
+	<div class="memo">
+		<p>システム上はクエリーの名前はユニークでなくとも構いません。</p>
+	</div>
+	<p>
+		種別がスナップショットの場合はさらに以下の項目を設定します。
+	</p>
+	<table border="1">
+		<tr>
+			<th>スプレッドシート</th>
+			<td>転記するGoogle Spreadsheetを指定します。</td>
+		</tr>
+		<tr>
+			<th>ワークシート</th>
+			<td>転記するGoogle Spreadsheet内のワークシートを指定します。</td>
+		</tr>
+		<tr>
+			<th>実行時刻</th>
+			<td>スナップショット取得の実行時刻を指定します。</td>
+		</tr>
+	</table>
+	<p>
+		指定したスプレッドシートまたはワークシートが存在しない場合は自動的に作成されます。
+	</p>
 </section>
 <section>
 	<h1>クエリーの種別</h1>
@@ -529,11 +526,41 @@ SELECT COUNT(*) FROM ACCOUNTS</pre></code>
 		クエリーにパラメータが無い場合はツリーでノードを選択した時に即時実行されますが、
 		パラメータがある場合はフォームでパラメータを入力してから実行することになります。
 	</p>
-		<code><pre>-- 会員数の推移を取得する
-SELECT COUNT(*) FROM ACCOUNTS</pre></code>
+		<code><pre>-- 指定した期間の売上を取得する
+SELECT TO_CHAR(purchased_date, 'YYYY-MM-DD'),
+       count(*),
+       SUM(price)
+  FROM sales
+ WHERE purchased_date >= :購入日From:datetime
+   AND purchased_date < :購入日To:datetime
+ GROUP BY 1
+ ORDER BY 1</pre></code>
 </section>
 <section>
-	<h1>インポートとエクスポート</h1>
+	<section>
+		<h1>エクスポート</h1>
+		<p>
+			登録されたクエリーをすべてテキストファイルに出力します。
+		</p>
+		<p>
+			クエリーの出力フォーマットは以下のようになります。
+		</p>
+		<ul>
+			<li>「--」に続けてクエリーの識別名</li>
+			<li>種別がグラフでグラフ設定がある場合「--」に続けてグラフ設定のJSON</li>
+			<li>説明がある場合は「/* */」で括って説明</li>
+			<li>SELECT文</li>
+		</ul>
+	</section>
+	<section>
+		<h1>インポート</h1>
+		<p>
+			エクスポート形式のテキストファイルをインポートします。
+		</p>
+		<p>
+			同じ名前のクエリーがある場合はインポート内容で上書きされます。
+		</p>
+	</section>
 </section>
 <footer>
 <div class="copy-right">
