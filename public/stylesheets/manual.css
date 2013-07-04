@@ -102,6 +102,7 @@ table {
 th {
 	padding: 2px 4px;
 	background-color: #EDEDED;
+	text-align: left;
 }
 
 td:first-child {

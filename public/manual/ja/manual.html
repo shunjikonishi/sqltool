@@ -27,10 +27,11 @@
 		Herokuの場合同種のツールとしてDataClipがありますが、本アプリケーションには以下の優位点があります。
 	</p>
 	<ul>
-		<li>SELECT文の中にプレースホルダを埋め込むことでパラメータが使用できます。</li>
-		<li>登録したクエリーを階層構造で整理できます。</li>
-		<li>SELECT結果をダイレクトにグラフ表示できます。</li>
-		<li>指定した時間にSELECT結果のスナップショットをGoogle Spreadsheetに転記することができます。</li>
+		<li>SELECT文の中にプレースホルダを埋め込むことで<em>パラメータ</em>が使用できます。</li>
+		<li>登録したクエリーを<em>階層構造</em>で整理できます。</li>
+		<li>SELECT結果の<em>ページング</em>と<em>ソート</em>ができます。</li>
+		<li>SELECT結果をダイレクトに<em>グラフ表示</em>できます。</li>
+		<li>指定した時間にSELECT結果のスナップショットを<em>Google Spreadsheetに転記</em>することができます。</li>
 	</ul>
 	<div class="memo">
 		簡便化のため以下の説明はHeroku上でHeroku Postgresを対象に動作させることを想定して
@@ -118,7 +119,7 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 			TIMEZONEはスケジュール設定する時刻のタイムゾーンです。日本で使用する場合は「Asia/Tokyo」としてください。
 		</p>
 		<p>
-			環境設定にGoogleアカウントの設定が無い場合はSELECT文登録時の種別に「スナップショット」が表示されません。
+			環境設定にGoogleアカウントの設定が無い場合はクエリー登録時の種別に「スナップショット」が表示されません。
 		</p>
 	</section>
 	<section>
@@ -158,11 +159,28 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 			</p>
 		</div>
 	</section>
+	<section>
+		<h1>Heroku以外にセットアップする場合</h1>
+		<p>
+			必要なコンポーネントは以下です。
+		</p>
+		<ul>
+			<li>Playframework 2.1.1</li>
+			<li>クエリーを保存するためのデータベース</li>
+			<li>cronまたはそれに類するスケジューラ</li>
+		</ul>
+		<p>
+			Herokuではrakeも使用していますが、これはなくても構いません。
+		</p>
+		<p>
+			がんばってください。
+		</p>
+	</section>
 </section>
 <section>
 	<h1>画面構成</h1>
 	<p>
-		メイン画面は以下の3ペインから構成されます。
+		メイン画面は以下の3ペインと画面上部のメニューから構成されます。
 	</p>
 	<ul>
 		<li>Treeペイン<br>
@@ -187,6 +205,7 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 		<p>
 			クエリーを選択した場合、選択したクエリーにパラメータが無い場合はSELECT文が即時実行され、
 			結果がResultペインに表示されます。
+			パラメータが有る場合にはパラメータの入力画面が表示されます。
 		</p>
 		<p>
 			選択したクエリーがスナップショットの場合はスナップショットの転記先のGoogle Spreadsheetが表示されます。
@@ -206,49 +225,312 @@ heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
 	</section>
 	<section>
 		<h1>SQLペイン</h1>
-		- SQL入力
-		- 実行
-		- 新規
-		- 保存
-		- 名前を付けて保存
-		- 編集
-		- 削除
-		- グラフ設定
+		<p>
+			SQLペインは実行するクエリーの情報を表示／編集するための領域です。
+		</p>
+		<p>
+			上部には各種アクションを実行するためのボタンがあり、クエリー中にパラメータがある場合に使用する
+			フォームタブがあります。
+		</p>
+		<table border="1">
+			<tr>
+				<th>SQLタブ</th>
+				<td>クエリーを入力するためのテキストエリアです。</td>
+			</tr>
+			<tr>
+				<th>フォームタブ</th>
+				<td>クエリーにパラメータがある場合の入力フォームです。</td>
+			</tr>
+			<tr>
+				<th>実行</th>
+				<td>
+					SQLタブに入力されたクエリーを実行し、結果をResultペインに表示します。<br>
+					種別によって結果は以下のように表示されます。
+					<ul>
+						<li>クエリー - SELECT結果をテーブル形式で表示します。</li>
+						<li>グラフ - SELECT結果をグラフで表示します。</li>
+						<li>スナップショット - SELECT結果をGoogleSpreadsheetに追加します。</li>
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<th>新規</th>
+				<td>SQLペインの内容をクリアして新規状態にします。</td>
+			</tr>
+			<tr>
+				<th>保存</th>
+				<td>上書き保存。未保存の場合は新規保存になります。</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;名前を付けて保存</th>
+				<td>新たに名前を付けて保存します。</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;編集</th>
+				<td>名前や説明の変更を行います。</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;削除</th>
+				<td>保存済みのクエリーをツリーから削除します。</td>
+			</tr>
+			<tr>
+				<th>グラフ設定</th>
+				<td>種別がグラフの場合のグラフ表示設定を行います。</td>
+			</tr>
+		</table>
 	</section>
 	<section>
 		<h1>Resultペイン</h1>
-		- クエリーの表示
-		- グラフの表示
-		- スナップショットの表示
+		<p>
+			クエリーの実行結果が表示される領域です。
+		</p>
+		<p>
+			実行結果の表示方法はクエリーの種別に応じて変わります。
+		</p>
 	</section>
 	<section>
 		<h1>メニュー</h1>
-		- ファイル
-		- エクスポート
-		- インポート
-		- 使い方
+		<p>
+			メニューの構成は以下のようになっています。
+		</p>
+		<table border="1">
+			<tr>
+				<th>ファイル</th>
+				<td></td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;エクスポート</th>
+				<td>クエリーをテキストファイルにエクスポートします。</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;エクスポート</th>
+				<td>クエリーをテキストファイルからインポートします。</td>
+			</tr>
+			<tr>
+				<th>使い方</th>
+				<td>
+					このページを表示します。
+				</td>
+			</tr>
+			<tr>
+				<th>言語</th>
+				<td></td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;英語<br>&nbsp;&nbsp;日本語</th>
+				<td>表示言語を切り替えます。</td>
+			</tr>
+		</table>
 	</section>
 </section>
 <section>
-	<h1>SQLの保存</h1>
+	<h1>クエリーの保存</h1>
+	<p>
+		クエリーの保存時には以下の項目を設定します。
+	</p>
+		<table border="1">
+			<tr>
+				<th>名前</th>
+				<td>クエリーの名前を指定します。</td>
+			</tr>
+			<tr>
+				<th>グループ</th>
+				<td>
+					クエリーを分類するためのフォルダ名を指定します。<br>
+					「/」で区切ることで階層化できます。
+				</td>
+			</tr>
+			<tr>
+				<th>種別</th>
+				<td>
+					クエリーの種別を指定します。
+					<ul>
+						<li>クエリー</li>
+						<li>円グラフ</li>
+						<li>棒グラフ</li>
+						<li>折れ線グラフ</li>
+						<li>スナップショット</li>
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<th>説明</th>
+				<td>
+					クエリーの説明を指定します。
+				</td>
+			</tr>
+		</table>
+		<p>
+			種別がスナップショットの場合はさらに以下の項目を設定します。
+		</p>
+		<table border="1">
+			<tr>
+				<th>スプレッドシート</th>
+				<td>転記するGoogle Spreadsheetを指定します。</td>
+			</tr>
+			<tr>
+				<th>ワークシート</th>
+				<td>転記するGoogle Spreadsheet内のワークシートを指定します。</td>
+			</tr>
+			<tr>
+				<th>実行時刻</th>
+				<td>スナップショット取得の実行時刻を指定します。</td>
+			</tr>
+		</table>
+		<p>
+			指定したスプレッドシートまたはワークシートが存在しない場合は自動的に作成されます。
+		</p>
 </section>
 <section>
-	<h1>SQLの種別</h1>
+	<h1>クエリーの種別</h1>
+	<p>
+		クエリーの種別に応じた動作の詳細は以下のようになります。
+	</p>
 	<section>
 		<h1>クエリー</h1>
-		SELECT結果のダウンロード
+		<p>
+			SELECT結果をテーブルで表示します。
+		</p>
+		<p>
+			結果はページングされており、ヘッダをクリックすることでソートすることができます。
+		</p>
+		<p>
+			またテーブル右下のボタンからSELECT結果をCSVまたはExcelファイルとしてダウンロードできます。
+		</p>
 	</section>
 	<section>
 		<h1>グラフ</h1>
-		- SQLの書き方
+		<p>
+			SELECT結果をグラフで表示します。
+		</p>
+		<p>
+			グラフ化するクエリーは以下の形式でなければなりません。
+		</p>
+		<table border="1">
+			<tr>
+				<th>1列名</th>
+				<td>文字列</td>
+			</tr>
+			<tr>
+				<th>2列名以降</th>
+				<td>数値</td>
+			</tr>
+		</table>
+		<p>
+			2列目以降の数値列が複数ある場合はそれぞれの列がシリーズとなります。<br>
+			(円グラフの場合は3列目以降は無視されます。)
+		</p>
+		<code><pre>-- 商品別売り上げグラフ
+SELECT B.PRODUCT_NAME AS 商品名,
+       SUM(A.SALES_AMOUNT) AS 売上金額
+  FROM SALES A
+       INNER JOIN PRODUCTS B ON (A.PRODUCT_ID = B.PRODUCT_ID)
+ GROUP BY B.PRODUCT_NAME
+ ORDER BY 2 DESC</pre></code>
+		<p>
+			グラフの種類に応じて以下の項目が設定できます。
+		</p>
+		<h4>円グラフ</h4>
+		<table border="1">
+			<tr>
+				<th>有効レコード数</th>
+				<td>
+					グラフ表示に使用するレコード数<br>
+					例えば10とした場合11行目以降のレコードは「その他」にまとめられます。
+				</td>
+			</tr>
+		</table>
+		<h4>棒グラフ</h4>
+		<table border="1">
+			<tr>
+				<th>種別</th>
+				<td>
+					複数のシリーズがある場合に積み上げグラフとするのか並列に表示するのかの指定
+				</td>
+			</tr>
+			<tr>
+				<th>方向</th>
+				<td>
+					縦棒グラフにするのか横棒グラフにするのかの指定
+				</td>
+			</tr>
+		</table>
+		<h4>折れ線グラフ</h4>
+		<table border="1">
+			<tr>
+				<th>ラベル数</th>
+				<td>
+					X軸に表示するラベルの数
+				</td>
+			</tr>
+		</table>
 	</section>
 	<section>
 		<h1>スナップショット</h1>
-		- SQLの書き方
+		<p>
+			スナップショットはその時点でのSELECT結果をGoogle Spreadsheetに転記する機能です。
+		</p>
+		<p>
+			スケジュールによって毎日1度指定時間に実行されるので例えば会員数の推移など時系列によって変化する値を追うような用途で使用できます。
+		</p>
+		<p>
+			1列目にはスナップショットの実行時刻が、2列目以降にはクエリーの結果が転記されます。
+		</p>
+		<p>
+			通常は一回の実行で1行のみが返ってくるようなクエリーを登録します。
+		</p>
+		<code><pre>-- 会員数の推移を取得する
+SELECT COUNT(*) FROM ACCOUNTS</pre></code>
+		<p>
+			ツリーからスナップショットのノードを選択した場合は転記先のワークシートがiframeで表示されるので、
+			ワークシート側でグラフを設定しておけばそれがそのまま表示されます。
+		</p>
+		<p>
+			スナップショットが表示されている状態で実行ボタンをクリックした場合、
+			その場でクエリーが実行されその時点での結果がワークシートに転記されます。
+		</p>
 	</section>
 </section>
 <section id="object">
 	<h1>パラメータの指定</h1>
+	<p>
+		SELECT文中に「:&lt;パラメータ名&gt;[:&lt;データ型&gt;]」を埋め込むことでパラメータが使用できます。
+	</p>
+	<p>
+		指定できるデータ型は以下です。(データ型を省略した場合はstringとなります。)
+	</p>
+	<table border="1">
+		<tr>
+			<th>データ型</th>
+			<th>入力フィールド(input/@type)</th>
+		</tr>
+		<tr>
+			<th>string</th>
+			<td>text</td>
+		</tr>
+		<tr>
+			<th>int</th>
+			<td>number</td>
+		</tr>
+		<tr>
+			<th>boolean</th>
+			<td>checkbox</td>
+		</tr>
+		<tr>
+			<th>date</th>
+			<td>date</td>
+		</tr>
+		<tr>
+			<th>datetime</th>
+			<td>datetime-local</td>
+		</tr>
+	</table>
+	<p>
+		クエリーにパラメータが無い場合はツリーでノードを選択した時に即時実行されますが、
+		パラメータがある場合はフォームでパラメータを入力してから実行することになります。
+	</p>
+		<code><pre>-- 会員数の推移を取得する
+SELECT COUNT(*) FROM ACCOUNTS</pre></code>
 </section>
 <section>
 	<h1>インポートとエクスポート</h1>
