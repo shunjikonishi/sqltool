@@ -5,6 +5,7 @@ import play.api.mvc.Action;
 import play.api.mvc.AnyContent;
 import play.api.mvc.Request;
 import play.api.mvc.Result;
+import play.api.i18n.Messages;
 
 import play.api.data.Form;
 import play.api.data.Forms.tuple;
@@ -187,7 +188,7 @@ object GoogleTool extends Controller with DatabaseUtility {
 	def doExecute(bookName: String, sheetName: String, sql: String): Unit = withConnection { con =>
 		using(con.prepareStatement(sql)) { stmt =>
 			using(stmt.executeQuery) { rs =>
-				man.addResultSet(bookName, sheetName, rs);
+				man.addResultSet(bookName, sheetName, Messages("executeTime"), rs);
 			}
 		}
 	}

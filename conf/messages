@@ -8,6 +8,7 @@ direction=Direction
 edit=Edit
 english=English
 execute=Execute
+executeTime=ExecuteTime
 export=Export
 file=File
 form=Form

@@ -3,6 +3,8 @@ package models;
 import java.sql.ResultSet;
 import java.net.URL;
 import java.net.URI;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.client.spreadsheet.FeedURLFactory;
 import com.google.gdata.client.spreadsheet.SpreadsheetQuery;
@@ -118,18 +120,19 @@ class GoogleSpreadsheetManager(username: String, password: String) {
 		service.insert(listFeedUrl, row);
 	}
 	
-	def addResultSet(bookName: String, sheetName: String, rs: ResultSet): Unit = {
+	def addResultSet(bookName: String, sheetName: String, timeLabel: String, rs: ResultSet): Unit = {
 		val meta = rs.getMetaData;
-		val labels = for (idx <- 1 to meta.getColumnCount) yield {
+		val labels = timeLabel :: (for (idx <- 1 to meta.getColumnCount) yield {
 			meta.getColumnLabel(idx);
-		}
+		}).toList
+		val time = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
 		val book = getOrCreateSpreadsheet(bookName);
 		val sheet = getOrCreateWorksheet(book, sheetName, labels);
 		val normalizedLabels = labels.map(_.toLowerCase.replaceAll("[ 　]", ""));
 		while (rs.next) {
-			val values = for (idx <- 1 to meta.getColumnCount) yield {
+			val values = time :: (for (idx <- 1 to meta.getColumnCount) yield {
 				rs.getString(idx);
-			}
+			}).toList
 			addRow(sheet, normalizedLabels.zip(values));
 		}
 	}

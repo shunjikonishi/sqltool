@@ -1,6 +1,7 @@
 package models;
 
 import play.api.Logger;
+import play.api.i18n.Messages;
 
 import jp.co.flect.play2.utils.DatabaseUtility;
 import java.text.DecimalFormat;
@@ -41,9 +42,10 @@ object Schedule extends DatabaseUtility {
 	}
 	
 	private def execute(info: QueryInfo): Unit = withConnection { con =>
+		val timeLabel = Messages("executeTime");
 		using(con.prepareStatement(info.sql)) { stmt =>
 			using (stmt.executeQuery) { rs =>
-				gm.addResultSet(info.spreadsheet, info.worksheet, rs);
+				gm.addResultSet(info.spreadsheet, info.worksheet, timeLabel, rs);
 			}
 		}
 	}

@@ -170,3 +170,5 @@ ui.worksheet[ja]=ワークシート
 ui.scheduleTime=Execute time
 ui.scheduleTime[ja]=実行時刻
 
+executeTime=ExecuteTime
+executeTime[ja]=実行日時
