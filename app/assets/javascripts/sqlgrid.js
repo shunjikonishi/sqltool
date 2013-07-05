@@ -169,17 +169,6 @@ flect.util.SqlGrid = function(setting) {
 		if (setting.resize) {
 			grid.jqGrid("gridResize");
 		}
-		/*
-		$(pagerId + '_left').append (
-			'<div class="dropup" style="padding-left: 10px;">' +
-				'<a class="dropdown-toggle ui-icon ui-icon-arrowthickstop-1-s" data-toggle="dropdown" href="#"></a>' +
-				'<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style="z-index:100000;">'
-					+ '<li style="z-index:100000;">CSV</li>' + 
-					+ '<li style="z-index:100000;">Excel</li>' + 
-				'</ul>' + 
-			'</div>'
-		);
-		*/
 	}
 	$.extend(this, {
 		"execute" : execute,

@@ -38,9 +38,12 @@ object Global extends WithFilters(SessionIdFilter, AccessControlFilter) {
 				Schedule.main();
 				System.exit(0);
 			case "setup" =>
-				val file = new File("conf/create.sql");
+				val filename = sys.props.get("sqltool.script").getOrElse("conf/create.sql");
+				val file = new File(filename);
 				DB.withTransaction { con =>
-					new RunScript(con).run(file);
+					val script = new RunScript(con);
+					script.setIgnoreDdlError(true);
+					script.run(file);
 				}
 				System.exit(0);
 			case _ =>
