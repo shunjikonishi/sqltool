@@ -100,10 +100,10 @@ flect.util.SqlGraph = function(setting) {
 				"horizontalLines" : true
 			},
 			"xaxis" : {
-				"showLabels" : true,
+				"showLabels" : true
 			},
 			"yaxis" : {
-				"showLabels" : true,
+				"showLabels" : true
 			}
 		};
 		if (graphSetting) {
@@ -153,7 +153,7 @@ flect.util.SqlGraph = function(setting) {
 				"showLabels" : true,
 				"labelsAngle" : 45,
 				"labelCount" : 10
-			},
+			}
 		};
 		if (graphSetting) {
 			lineSetting = $.extend(true, lineSetting, graphSetting);
