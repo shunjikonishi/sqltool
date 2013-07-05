@@ -10,6 +10,7 @@ import jp.co.flect.rdb.RunScript;
 import java.io.File;
 import java.util.Locale;
 
+import controllers.QueryTool;
 import models.Schedule;
 
 object Global extends WithFilters(SessionIdFilter, AccessControlFilter) {
@@ -45,6 +46,13 @@ object Global extends WithFilters(SessionIdFilter, AccessControlFilter) {
 					script.setIgnoreDdlError(true);
 					script.run(file);
 				}
+				System.exit(0);
+			case "import" =>
+				val filename = sys.props.get("sqltool.script").getOrElse("testdata/import.sql");
+				val file = new File(filename);
+				val man = QueryTool.man;
+				man.deleteAll;
+				man.importFrom(file);
 				System.exit(0);
 			case _ =>
 		}

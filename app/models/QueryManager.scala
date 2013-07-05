@@ -22,6 +22,7 @@ trait QueryManager {
 	def getQueryInfo(kind: QueryKind, group: String, name: String): Option[QueryInfo];
 	
 	def delete(id: String): Unit;
+	def deleteAll: Unit;
 	
 	def parse(sql: String): ParsedQuery = {
 		val st = new SelectTokenizer(sql);
@@ -195,6 +196,10 @@ class RdbQueryManager(val databaseName: String) extends QueryManager with Databa
 			.on(
 				"id" -> Integer.parseInt(id)
 			).executeUpdate();
+	}
+	
+	def deleteAll: Unit = withTransaction { implicit con =>
+		SQL("DELETE FROM sqltool_sql").executeUpdate();
 	}
 	
 	def getGroupList(parent: String): List[String] = withConnection { implicit con =>
