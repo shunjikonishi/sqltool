@@ -114,9 +114,13 @@ heroku config:set BASIC_AUTHENTICATION=username:password</pre></code>
 		<code><pre
 >heroku config:set GOOGLE_USERNAME=xxxx@gmail.com
 heroku config:set GOOGLE_PASSWORD=yyyyyy
-heroku config:set TIMEZONE=Asia/Tokyo</pre></code>
+heroku config:set TIMEZONE=Asia/Tokyo
+heroku config:set LANG=ja_JP</pre></code>
 		<p>
 			TIMEZONEはスケジュール設定する時刻のタイムゾーンです。日本で使用する場合は「Asia/Tokyo」としてください。
+		</p>
+		<p>
+			LANGを「ja_JP」にしておくとスナップショット取得時の1列目が「実行時刻」と日本語になります。
 		</p>
 		<p>
 			環境設定にGoogleアカウントの設定が無い場合はクエリー登録時の種別に「スナップショット」が表示されません。

@@ -9,3 +9,6 @@ task "schedule" do
 	sh "target/start -Dsqltool.mode=schedule " + opt
 end
 
+task "setup" do
+	sh "target/start -Dsqltool.mode=setup"
+end

@@ -1,8 +1,12 @@
 import play.api.Application;
+import play.api.db.DB;
 import play.api.mvc.WithFilters;
+import play.api.Play.current;
+import play.api.Logger;
 import jp.co.flect.play2.filters.SessionIdFilter;
 import jp.co.flect.play2.filters.AccessControlFilter;
 import jp.co.flect.util.ResourceGen;
+import jp.co.flect.rdb.RunScript;
 import java.io.File;
 import java.util.Locale;
 
@@ -26,9 +30,18 @@ object Global extends WithFilters(SessionIdFilter, AccessControlFilter) {
 			val gen = new ResourceGen(defaults.getParentFile(), "messages");
 			gen.process(origin);
 		}
-		sys.props.get("sqltool.mode").getOrElse("web") match {
+		val mode = sys.props.get("sqltool.mode").getOrElse("web");
+		Logger.info("Application start mode=" + mode);
+		
+		mode match {
 			case "schedule" =>
 				Schedule.main();
+				System.exit(0);
+			case "setup" =>
+				val file = new File("conf/create.sql");
+				DB.withTransaction { con =>
+					new RunScript(con).run(file);
+				}
 				System.exit(0);
 			case _ =>
 		}
