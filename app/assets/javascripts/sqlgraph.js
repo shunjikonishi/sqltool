@@ -153,6 +153,9 @@ flect.util.SqlGraph = function(setting) {
 				"showLabels" : true,
 				"labelsAngle" : 45,
 				"labelCount" : 10
+			},
+			"yaxis" : {
+				"min" : 0
 			}
 		};
 		if (graphSetting) {
