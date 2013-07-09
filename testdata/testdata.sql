@@ -7,9 +7,9 @@ CREATE TABLE score_table (
   mail varchar(255) default NULL,
   tel varchar(100) default NULL,
   addr varchar(255) default NULL,
-  math mediumint default NULL,
-  english mediumint default NULL,
-  japanese mediumint default NULL
+  math int default NULL,
+  english int default NULL,
+  japanese int default NULL
 );
 
 INSERT INTO score_table (first_name,last_name,mail,tel,addr,math,english,japanese) VALUES ('Myra','Henson','Integer.aliquam@Nulladignissim.net','094-559-6881','916-7774 Non Avenue','76','56','87');

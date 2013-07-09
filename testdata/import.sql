@@ -4,4 +4,4 @@
 の説明
 
 */
-SELECT * FROM Table1
+SELECT * FROM score_table
