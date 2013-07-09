@@ -128,7 +128,7 @@ class GoogleSpreadsheetManager(username: String, password: String) {
 		val time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 		val book = getOrCreateSpreadsheet(bookName);
 		val sheet = getOrCreateWorksheet(book, sheetName, labels);
-		val normalizedLabels = labels.map(_.toLowerCase.replaceAll("[ 　]", ""));
+		val normalizedLabels = labels.map(_.toLowerCase.replaceAll("[ 　_]", ""));
 		while (rs.next) {
 			val values = time :: (for (idx <- 1 to meta.getColumnCount) yield {
 				rs.getString(idx);
