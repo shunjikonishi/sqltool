@@ -67,6 +67,9 @@ ui.tables[ja]=テーブル
 ui.views=Views
 ui.views[ja]=ビュー
 
+ui.query=Query
+ui.queries[ja]=クエリー
+
 ui.queries=Queries
 ui.queries[ja]=クエリー
 
@@ -79,7 +82,7 @@ ui.save[ja]=保存
 ui.cancel=Cancel
 ui.cancel[ja]=キャンセル
 
-ui.confirmDelete=Delete query.\nAre you sure?
+ui.confirmDelete=Delete query.\\nAre you sure?
 ui.confirmDelete[ja]=クエリーを削除しますか？
 
 ui.required={0} is required

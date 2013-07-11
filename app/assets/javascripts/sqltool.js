@@ -877,7 +877,7 @@ if (typeof(flect.app.sqltool) == "undefined") flect.app.sqltool = {};
 		},
 		QueryKind = new Enum([
 			{ "code" : -1, "name" : "Group",     "text" : MSG.group },
-			{ "code" : 1,  "name" : "Query",     "text" : MSG.queries, "icon" : "query.png"},
+			{ "code" : 1,  "name" : "Query",     "text" : MSG.query, "icon" : "query.png"},
 			{ "code" : 11, "name" : "PieGraph",  "text" : MSG.pieGraph,  "icon" : "pie_chart.png", "graphType" : "pie", "defaults" : {
 					"others" : {
 						"count" : 12,

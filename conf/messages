@@ -33,7 +33,7 @@ sql=SQL
 stacked=Stacked
 ui.barGraph=Bar chart
 ui.cancel=Cancel
-ui.confirmDelete=Delete query.\nAre you sure?
+ui.confirmDelete=Delete query.\\nAre you sure?
 ui.graphSetting=Graph setting
 ui.group=Group
 ui.importResult=Import: Insert={0}, Update={1}
@@ -42,6 +42,7 @@ ui.noParameters=No parameters
 ui.other=Other
 ui.pieGraph=Pie chart
 ui.queries=Queries
+ui.query=Query
 ui.required={0} is required
 ui.requiredIfSchedule=When kind is Snapshot, {0} is required
 ui.save=Save

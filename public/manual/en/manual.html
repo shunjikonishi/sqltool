@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>About SQLTool</title>
+<link rel="stylesheet" media="screen" href="../../stylesheets/manual.css">
+<!--[if lt IE 9.0]>
+<link rel="stylesheet" media="screen" href="stylesheets/manual.oldie.css">
+<![endif]-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="../../javascripts/jquery.splitter.js"></script>
+<script src="../../javascripts/manual.js"></script>
+</head>
+<body>
+<header>
+	<h1>Furoku - SQLTool</h1>
+	<a href="/main">Main</a>
+	<div style="clear:both"></div>
+</header>
+<nav></nav>
+<section>
+	<h1>What is SQLTool</h1>
+	<p>
+		This application allows you to register some queries for specified database, and execute them on the web browser.
+	</p>
+	<p>
+		If you are using Heroku, you know Heroku has a similar tool called DataClip. But this application has following advantages.
+	</p>
+	<ul>
+		<li>You can use <em>parameters</em> in SELECT statatement.</li>
+		<li>You can manage registered query with <em>tree structure</em>.</li>
+		<li>You can do <em>paging and sorting</em> to resultset.</li>
+		<li>You can view resultset as a <em>graph</em>.</li>
+		<li>You can copy resultset to <em>Google Spreadsheet</em> at the specified time.</li>
+	</ul>
+	<div class="memo">
+		For simply explain, this document targets Heroku and Heroku postgres. But if you can prepare the environment, of course you can run it on other environment.
+	</div>
+</section>
+<section>
+	<h1>Install</h1>
+	<p>
+		You can run this application by following steps.
+	</p>
+	<section>
+		<h1>Prerequisite</h1>
+		<ul>
+			<li>You should setup Heroku Toolbelt.</li>
+		</ul>
+	</section>
+	<section>
+		<h1>Create Heroku application</h1>
+		<p>
+			You can setup this application on Heroku by following commands.
+		</p>
+		<code><pre
+>git clone git@github.com:shunjikonishi/sqltool.git
+heroku create
+git push heroku master
+heroku run rake setup</pre></code>
+		<p>'rake setup' is used to create table in the default database which is setuped by Heroku. It only runs conf/create.sql.</p>
+		<p>This application uses it as a storage for registered query.</p>
+		<p>
+			At  most the number of rows are seemed to several hundred. So you don't need prduction database.<br>
+			If you want to a backup, you can use export feature of this application.
+		</p>
+	</section>
+	<section>
+		<h1>Setting environment variables</h1>
+		<h4>Database setting</h4>
+		<p>
+			To run this application, at least following variable is required.
+		</p>
+		<code><pre>heroku config:set TARGET_DATABASE=&lt;your database url></pre></code>
+		<p>
+			TARGE_DATABASE is a url of the database that you want to use query.
+		</p>
+		<div class="memo">
+			This application never execute any data modify statements. Just select statements are applied to TARGET_DATABASE.
+		</div>
+		<h4>Security setting</h4>
+		<p>
+			If you want to apply this application tany access restriction, you should set following variables.
+		</p>
+		<code><pre
+>heroku config:set ALLOWED_IP=xxx.xxx.xxx.xxx,yyy.yyy.yyy.0/255,zzz.zzz.zzz.zzz
+heroku config:set BASIC_AUTHENTICATION=username:password</pre></code>
+		<p>
+			ALLOWED_IP takes some comma  separated IP addresses list. You can use subnet expression.
+		</p>
+		<p>
+			BASIC_AUTHENTICATION takes a username and password for basic authentication.
+		</p>
+		<div class="memo">
+			<p><em>Caution !!!</em></p>
+			<p>
+				Heroku applications are published for internet. So if you don't apply security settings, anyone can access your data.
+			</p>
+			<p>
+				I strongly recommend to apply security settings.
+			</p>
+		</div>
+		<h4>Snapshot setting</h4>
+		<p>
+			<i>If you don't use snapshot feature, you don't need to apply followings.</i>
+		</p>
+		<p>
+			If you want to use snapshot feature, you should set some more variables to cooparate with Google spreadsheet.
+		</p>
+		<code><pre
+>heroku config:set GOOGLE_USERNAME=xxxx@gmail.com
+heroku config:set GOOGLE_PASSWORD=yyyyyy
+heroku config:set TIMEZONE=Asia/Tokyo
+heroku config:set LANG=ja_JP</pre></code>
+		<p>
+			TIMEZONE takes a timezone for scheduled time. If omitted, the default value is UTC.
+		</p>
+		<p>
+			LANG takes a language for spreadsheet column. Supported value is "ja_JP" only. If omitted, the default value is English.
+		</p>
+		<p>
+			If you don't set these variables, snapshot features are not displayed.
+		</p>
+	</section>
+	<section>
+		<h1>Scheduler setting</h1>
+		<p>
+			<i>If you don't use snapshot feature, you don't need to apply followings.</i>
+		</p>
+		<p>
+			At the snapshot feature, this application copies the query resultset to Google spreadsheet periodically.
+			But this application doesn't have schedule feature.
+		</p>
+		<p>
+			So to schedule snapshot feature, you should use Heroku scheduler.
+		</p>
+		<code><pre>heroku addons:add scheduler:standard</pre></code>
+		<p>
+			You should add Heroku scheduler addon, and apply following setting in web console of Scheduler.
+		</p>
+		<table border="1">
+			<tr>
+				<th>TASK</th>
+				<th>FREQUENCY</th>
+				<th>NEXT RUN</th>
+			</tr>
+			<tr>
+				<td>rake</td>
+				<td>Hourly</td>
+				<td>:00</td>
+			</tr>
+		</table>
+		<div class="memo">
+			<p>
+				Internally this job search the queries that are scheduled at that time and run it.
+			</p>
+			<p>
+				If your schedule setting is only one time, you can use setting value 'daily'.
+			</p>
+		</div>
+	</section>
+	<section>
+		<h1>If you want to use except Heroku</h1>
+		<p>
+			Required components are follows.
+		</p>
+		<ul>
+			<li>Playframework 2.1.1</li>
+			<li>RDBMS for save queries.</li>
+			<li>Scheduler like cron</li>
+		</ul>
+		<p>
+			Though we use rake on Heroku, you can run this application without rake.
+		</p>
+		<p>
+			Do your best.
+		</p>
+	</section>
+</section>
+<section>
+	<h1>Screen structure</h1>
+	<p>
+		The main page consists of 3 panes and menu.
+	</p>
+	<ul>
+		<li>Tree pane<br>
+			The area that displays registered queries and tables.
+		</li>
+		<li>SQL pane<br>
+			The area that displays and edits each queries.
+		</li>
+		<li>Result pane<br>
+			The area that displays query result.
+		</li>
+	</ul>
+	<section>
+		<h1>Tree pane</h1>
+		<p>
+			Two nodes are display in top level. These are queries and schemas.
+		</p>
+		<h4>Queries</h4>
+		<p>
+			Queries has the queries that you registered. You can manage them with any folders.
+		</p>
+		<p>
+			When you select a query node, your query executes immediately.
+			If the query has some parameters, the parameter form is shown.
+		</p>
+		<p>
+			You can move the query by drag and drop.
+		</p>
+		<h4>Schemas</h4>
+		<p>
+			Schemas has the tables and views that exist in the database.
+		</p>
+		<p>
+			When you select a table node or view node, The query for selected table executes immediately.
+			結果がResultペインに表示されます。
+		</p>
+		<p>
+			At that time, the select statment is displayed in SQL pane.<br>
+			So you can edit this statement and register it.
+		</p>
+	</section>
+	<section>
+		<h1>SQL pane</h1>
+		<p>
+			SQL pane is the area for editing query.
+		</p>
+		<p>
+			At the top of pane, there are some buttons to execute  actions.<br>
+			The tab is used to input parameters when the query has some parameters.
+		</p>
+		<table border="1">
+			<tr>
+				<th>SQL tab</th>
+				<td>The textare for editing query.</td>
+			</tr>
+			<tr>
+				<th>Form tab</th>
+				<td>The input form for query parameters.</td>
+			</tr>
+			<tr>
+				<th>Execute</th>
+				<td>
+					Execute a query that is inputed in SQL tab, and display result in Result pane.
+				</td>
+			</tr>
+			<tr>
+				<th>New</th>
+				<td>Clear SQL pane.</td>
+			</tr>
+			<tr>
+				<th>Save</th>
+				<td>Save a query.</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;Save as</th>
+				<td>Save a query as new query.</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;Edit</th>
+				<td>Modify name or description.</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;Delete</th>
+				<td>Remove query.</td>
+			</tr>
+			<tr>
+				<th>Graph setting</th>
+				<td>When the query kind is a graph, apply graph setting.</td>
+			</tr>
+		</table>
+	</section>
+	<section>
+		<h1>Result pane</h1>
+		<p>
+			Query result is displayed in this area.
+		</p>
+		<p>
+			The view of query result is changed by query kind.
+		</p>
+	</section>
+	<section>
+		<h1>Menu</h1>
+		<p>
+			The menu contains following commands.
+		</p>
+		<table border="1">
+			<tr>
+				<th>File</th>
+				<td></td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;Export</th>
+				<td>Export queries to a text file.</td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;Import</th>
+				<td>Import queries from a text file.</td>
+			</tr>
+			<tr>
+				<th>How to use</th>
+				<td>
+					Show this page.
+				</td>
+			</tr>
+			<tr>
+				<th>Language</th>
+				<td></td>
+			</tr>
+			<tr>
+				<th>&nbsp;&nbsp;English<br>&nbsp;&nbsp;Japanese</th>
+				<td>Switch display language.</td>
+			</tr>
+		</table>
+	</section>
+</section>
+<section>
+	<h1>Save query</h1>
+	<p>
+		When you save a query, you should set following fields.
+	</p>
+	<table border="1">
+		<tr>
+			<th>Name</th>
+			<td>The name of query.</td>
+		</tr>
+		<tr>
+			<th>Group</th>
+			<td>
+				The name of grouping folder.<br>
+				You can use '/' character to separate tree structure.
+			</td>
+		</tr>
+		<tr>
+			<th>Kind</th>
+			<td>
+				The kind of query.
+				<ul>
+					<li>Query</li>
+					<li>Pie chart</li>
+					<li>Bar chart</li>
+					<li>Line chart</li>
+					<li>Snapshot</li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<th>Description</th>
+			<td>
+				The description of query.
+			</td>
+		</tr>
+	</table>
+	<div class="memo">
+		<p>The query name need not be unique.</p>
+	</div>
+	<p>
+		When the kind is Snapshot, you should set following fields additionally.
+	</p>
+	<table border="1">
+		<tr>
+			<th>Spreadsheet</th>
+			<td>The name of Google Spreadsheet that is used to copy the resultset.</td>
+		</tr>
+		<tr>
+			<th>Worksheet</th>
+			<td>The name of worksheet in the Google Spreadsheet.</td>
+		</tr>
+		<tr>
+			<th>Execute time</th>
+			<td>The time to execute snapshot.</td>
+		</tr>
+	</table>
+	<p>
+		When the specified Spreadsheet or worksheet is not found, it is automatically made.
+	</p>
+</section>
+<section>
+	<h1>The kind of query</h1>
+	<p>
+		The query kind determine the action of execute button.
+	</p>
+	<section>
+		<h1>Query</h1>
+		<p>
+			Display query result in the grid.
+		</p>
+		<p>
+			You can do paging and sorting in the grid.
+		</p>
+		<p>
+			You can download resultset as a CSV file or an Excel file from the buttons displayed at right bottom of the grid.
+		</p>
+	</section>
+	<section>
+		<h1>Chart</h1>
+		<p>
+			Display query result as a chart.
+		</p>
+		<p>
+			The select statement must obey following format.
+		</p>
+		<table border="1">
+			<tr>
+				<th>First column</th>
+				<td>String</td>
+			</tr>
+			<tr>
+				<th>Second column and later</th>
+				<td>Number</td>
+			</tr>
+		</table>
+		<p>
+			If there are multiple number columns, each columns will be a chart series.<br>
+			(If Pie chart, the third column and followings are ignored.)
+		</p>
+		<code><pre>-- Product sales
+SELECT B.PRODUCT_NAME AS Product,
+       SUM(A.SALES_AMOUNT) AS Sales
+  FROM SALES A
+       INNER JOIN PRODUCTS B ON (A.PRODUCT_ID = B.PRODUCT_ID)
+ GROUP BY B.PRODUCT_NAME
+ ORDER BY 2 DESC</pre></code>
+		<p>
+			You can set some graph properties.
+		</p>
+		<h4>Pie chart</h4>
+		<table border="1">
+			<tr>
+				<th>The number of records</th>
+				<td>
+					The number of display in the chart.<br>
+					For example, if you set 10, the records over 11 are summaries as 'Other'.
+				</td>
+			</tr>
+		</table>
+		<h4>Bar chart</h4>
+		<table border="1">
+			<tr>
+				<th>Kind</th>
+				<td>
+					Stacked chart or not.
+				</td>
+			</tr>
+			<tr>
+				<th>Direction</th>
+				<td>
+					The chart direction.
+				</td>
+			</tr>
+		</table>
+		<h4>Line chart</h4>
+		<table border="1">
+			<tr>
+				<th>The number of labels</th>
+				<td>
+					The number of labels that displayed on X axis.
+				</td>
+			</tr>
+		</table>
+	</section>
+	<section>
+		<h1>Snapshot</h1>
+		<p>
+			The snapshot is a feature to copy the current resultset to Google Spreadsheet.
+		</p>
+		<p>
+			For example, you can use this feature to follow the transition of user accounts.
+		</p>
+		<p>
+			At the Spreadsheet, the first column will be a timestamp, next columns are copied from resultset.
+		</p>
+		<p>
+			Actually you should register query that returns one row per each execute.
+		</p>
+		<code><pre>-- Follow the number of user accounts.
+SELECT COUNT(*) FROM ACCOUNTS</pre></code>
+		<p>
+			When you select a snapshot node from the tree, the worksheet is shown in iframe.
+		</p>
+		<p>
+			If you click the execute button, the query is executed and copied to the worksheet.
+		</p>
+	</section>
+</section>
+<section id="object">
+	<h1>Use parameters</h1>
+	<p>
+		You can use parameters by embeding ':&lt;parameterName&gt;[:&lt;dataType&gt;]' in SELECT statement.
+	</p>
+	<p>
+		Supported datatypes are follows.(If omitted, it will be 'string'.)
+	</p>
+	<table border="1">
+		<tr>
+			<th>Datatype</th>
+			<th>Input field(input/@type)</th>
+		</tr>
+		<tr>
+			<th>string</th>
+			<td>text</td>
+		</tr>
+		<tr>
+			<th>int</th>
+			<td>number</td>
+		</tr>
+		<tr>
+			<th>boolean</th>
+			<td>checkbox</td>
+		</tr>
+		<tr>
+			<th>date</th>
+			<td>date</td>
+		</tr>
+		<tr>
+			<th>datetime</th>
+			<td>datetime-local</td>
+		</tr>
+	</table>
+	<p>
+		When you select a query node in the tree, if the query has no parameters, it execute immediately.<br>
+		But if the query has some parameters, the parameter form is shown.
+	</p>
+		<code><pre>-- Select sales for specified period.
+SELECT TO_CHAR(purchased_date, 'YYYY-MM-DD'),
+       count(*),
+       SUM(price)
+  FROM sales
+ WHERE purchased_date >= :purchaseDateFrom:datetime
+   AND purchased_date < :purchaseDateTo:datetime
+ GROUP BY 1
+ ORDER BY 1</pre></code>
+</section>
+<section>
+	<section>
+		<h1>Export</h1>
+		<p>
+			Export regsitered queries to a text file.
+		</p>
+		<p>
+			The file format is as folows.
+		</p>
+		<ul>
+			<li>Starts with '--' and the group name and query name.</li>
+			<li>If the query kind is a chart, starts with '--' and graph setting as a JSON</li>
+			<li>If the query has a description, the description enclosed with '/* */'.</li>
+			<li>SELECT statement</li>
+		</ul>
+	</section>
+	<section>
+		<h1>Import</h1>
+		<p>
+			Import the exported text file.
+		</p>
+		<p>
+			If there are the queries which has the same name of imported query, it will be overwrited.
+		</p>
+	</section>
+</section>
+<footer>
+<div class="copy-right">
+	COPYRIGHT（C）FLECT CO.,LTD. ALL RIGHTS RESERVED
+</div>
+	<div style="clear:both"></div>
+</footer>
+</body>
+</html>
