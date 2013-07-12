@@ -68,7 +68,7 @@ ui.views=Views
 ui.views[ja]=ビュー
 
 ui.query=Query
-ui.queries[ja]=クエリー
+ui.query[ja]=クエリー
 
 ui.queries=Queries
 ui.queries[ja]=クエリー

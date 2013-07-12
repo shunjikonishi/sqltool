@@ -73,6 +73,25 @@ SELECT extract('month' from birthday) as Month,
  GROUP BY 1
  ORDER BY 1
 
+-- /Query/パラメータ/名前検索
+/*
+first_nameとlast_nameを連結して部分一致検索
+*/
+
+SELECT * FROM score_table
+ WHERE first_name || ' ' || last_name LIKE '%' || :名前 || '%'
+ ORDER BY first_name, last_name
+
+-- /Query/パラメータ/誕生日検索
+/*
+誕生日範囲での検索
+*/
+
+SELECT * FROM score_table
+ WHERE birthday >= :誕生日From:date
+   AND birthday < :誕生日To:date
+ ORDER BY birthday
+
 -- /Query/パラメータ/誕生月別一覧
 /*
 誕生月を入力してください。
@@ -83,7 +102,7 @@ select * from score_table
  order by birthday
 
 -- /Schedule/スナップショット/ランダムな一人
--- {"spreadsheet":"Furoku","worksheet":"ランダム","time":"01:00:00"}
+-- {"spreadsheet":"Furoku","worksheet":"テスト","time":"01:00:00"}
 select first_name, last_name, math, english, japanese from score_table
  order by random() limit 1
 
